@@ -1,0 +1,871 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Gépalap földrengésteher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: munkalap – bal oldalt bemenetek (globális + gép), jobb oldalt eredmények; alul az összes gép áttekintése */
+:root{
+  --bg:#ffffff; --panel:#ffffff; --ink:#18212b; --muted:#5b6672; --line:#d5dbe0; --soft:#f5f7f9;
+  --ec:#2c5aa0; --ec-soft:#e6eef9; --ro:#9a6410; --ro-soft:#f8eedd; --accent:#1f5f6b;
+  --ok:#2c7a4b; --ok-soft:#e3f2e8; --warn:#a56a00; --warn-soft:#fbf0d9; --crit:#b3362b; --crit-soft:#f9e3e0;
+  --f-display:"Archivo","Segoe UI",Arial,sans-serif; --f-body:"IBM Plex Sans","Segoe UI",Arial,sans-serif; --f-mono:"IBM Plex Mono",Consolas,monospace;
+}
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+h1{font-family:var(--f-display);font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.codes{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-family:var(--f-mono);font-size:11.5px;padding:3px 8px;border-radius:3px;border:1px solid var(--line);background:var(--panel)}
+.tag.ec{color:var(--ec);border-color:var(--ec)} .tag.ro{color:var(--ro);border-color:var(--ro)}
+.grid{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+section.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 14px 16px;min-width:0}
+.card h2{font-family:var(--f-display);font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:.01em}
+.card h2 .chip{font-family:var(--f-mono);font-size:10.5px;font-weight:500;padding:1px 6px;border-radius:3px}
+.chip.ec{background:var(--ec-soft);color:var(--ec)} .chip.ro{background:var(--ro-soft);color:var(--ro)}
+.card.ec{border-top:3px solid var(--ec)} .card.ro{border-top:3px solid var(--ro)}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
+.fields .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+label.f span.u{font-family:var(--f-mono);font-size:11px}
+input,select{font:inherit;font-size:13.5px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:6px 8px;width:100%;min-width:0}
+input{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+.sep{grid-column:1/-1;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;margin-top:4px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:4px;padding:6px 10px;cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+button:hover{filter:brightness(.97)}
+/* results */
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.compare{grid-template-columns:minmax(0,1fr)}}
+.code{border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
+.code.ec{background:var(--ec-soft);border-color:transparent} .code.ro{background:var(--ro-soft);border-color:transparent}
+.code h3{margin:0 0 8px;font-size:13px;font-family:var(--f-display);display:flex;justify-content:space-between;gap:8px}
+.code.ec h3{color:var(--ec)} .code.ro h3{color:var(--ro)}
+.steps{font-family:var(--f-mono);font-size:12.5px;display:flex;flex-direction:column;gap:3px;font-variant-numeric:tabular-nums}
+.steps .r{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.steps .r b{font-weight:500}
+.big{font-family:var(--f-display);font-size:28px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums}
+.big small{font-family:var(--f-body);font-size:12px;font-weight:400;color:var(--muted);margin-left:6px}
+.design{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin-top:12px}
+.kv{display:flex;flex-direction:column;min-width:90px}
+.kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kv .v{font-family:var(--f-mono);font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.crit{background:var(--crit-soft);color:var(--crit)} .pill.na{background:var(--soft);color:var(--muted)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.check{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:5px;border-left-width:4px}
+.check.ok{border-left-color:var(--ok)} .check.warn{border-left-color:var(--warn)} .check.crit{border-left-color:var(--crit)} .check.na{border-left-color:var(--line)}
+.check .t{font-size:13px} .check .d{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+td.n{font-family:var(--f-mono);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr.sel td{background:var(--ec-soft)}
+tbody.click tr{cursor:pointer} tbody.click tr:hover td{background:var(--soft)}
+.dir{font-family:var(--f-mono);font-weight:600}
+.notes{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:5px;max-width:95ch}
+.notes b{color:var(--ink)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.two{grid-template-columns:minmax(0,1fr)}}
+sub,sup{font-size:.72em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.lang button{border:0;border-radius:0;padding:4px 10px;font-family:var(--f-mono);font-size:12px;background:var(--panel)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);background:var(--panel);font:italic 600 11px/1 Georgia,serif;padding:0;margin-left:5px;cursor:pointer;vertical-align:middle;flex:none}
+.ib[aria-expanded="true"]{background:var(--accent);color:var(--panel)}
+.info{font-size:12px;line-height:1.45;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:7px 9px;margin-top:3px}
+.info b{color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:5px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;border-radius:0;padding:7px 14px;font-weight:600;background:var(--panel)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"][data-drive="ec"]{background:var(--ec);color:#fff}
+.seg button[aria-pressed="true"][data-drive="ro"]{background:var(--ro);color:#fff}
+.seg button[aria-pressed="true"][data-drive="max"]{background:var(--ink);color:#fff}
+.dim{opacity:.45}
+.drivebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.lbl-row{display:flex;align-items:center;flex-wrap:wrap}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1 data-i="title">Gépalap földrengésteher</h1>
+    <div class="sub" data-i="sub"></div>
+  </div>
+  <div class="hdr-r">
+    <div class="lang" role="group" aria-label="Nyelv / Limba / Language">
+      <button type="button" data-lang="hu">HU</button><button type="button" data-lang="ro">RO</button><button type="button" data-lang="en">EN</button>
+    </div>
+    <div class="codes"><span class="tag ec">MSZ EN 1998-1 + NA · 4.3.5</span><span class="tag ro">P100-1/2013 · cap. 10</span></div>
+  </div>
+</header>
+
+<div class="grid">
+<div class="col">
+  <section class="card">
+    <h2><span data-i="drive" data-info="drive"></span></h2>
+    <div class="drivebar"><div class="seg" role="group"><button type="button" data-drive="ec">Eurocode</button><button type="button" data-drive="ro">P100</button><button type="button" data-drive="max" data-i="drive_max"></button></div></div>
+    <div class="hint" data-i="drive_hint"></div>
+  </section>
+  <section class="card ec" id="card_ec">
+    <h2>Eurocode <span class="chip ec">EC8</span></h2>
+    <div class="fields">
+      <label class="f"><span data-i="agR" data-info="agR"></span><input id="g_agR" inputmode="decimal"></label>
+      <label class="f"><span data-i="gI" data-info="gI"></span>
+        <select id="g_gI"><option value="0.8" data-i="gI1"></option><option value="1" data-i="gI2"></option><option value="1.2" data-i="gI3"></option><option value="1.4" data-i="gI4"></option></select></label>
+      <label class="f"><span data-i="soil" data-info="soil"></span>
+        <select id="g_soil"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></label>
+      <label class="f"><span data-i="soilinfo" data-info="soilinfo"></span><input id="g_soilinfo" readonly tabindex="-1"></label>
+    </div>
+    <div class="hint" data-i="ec_hint"></div>
+  </section>
+
+  <section class="card ro" id="card_ro">
+    <h2><span data-i="ro_h"></span> <span class="chip ro">P100-1/2013</span></h2>
+    <div class="fields">
+      <label class="f"><span data-i="ag" data-info="ag"></span><input id="g_ag" inputmode="decimal"></label>
+      <label class="f"><span data-i="gIe" data-info="gIe"></span>
+        <select id="g_gIe"><option value="1.4">I – 1,4</option><option value="1.2">II – 1,2</option><option value="1">III – 1,0</option><option value="0.8">IV – 0,8</option></select></label>
+    </div>
+    <div class="hint" data-i="ro_hint"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-i="common_h"></h2>
+    <div class="fields">
+      <label class="f"><span data-i="delta" data-info="delta"></span><input id="g_delta" inputmode="decimal"></label>
+      <label class="f"><span data-i="gc" data-info="gc"></span><input id="g_gc" inputmode="decimal"></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 data-i="machine_h"></h2>
+    <div class="toolbar" style="margin-bottom:10px">
+      <select id="m_sel" style="flex:1 1 200px" aria-label="Gép / Utilaj / Machine"></select>
+      <button id="b_add" type="button" data-i="add"></button>
+      <button id="b_del" type="button" data-i="del"></button>
+    </div>
+    <div class="fields" id="mfields">
+      <label class="f"><span data-i="mid"></span><input id="m_id"></label>
+      <label class="f"><span data-i="mname"></span><input id="m_name" style="font-family:var(--f-body)"></label>
+      <label class="f"><span data-i="Wa" data-info="Wa"></span><input id="m_Wa" inputmode="decimal"></label>
+      <label class="f"><span data-i="Wh" data-info="Wh"></span><input id="m_Wh" inputmode="decimal"></label>
+
+      <div class="sep" data-i="sep_cg"></div>
+      <label class="f"><span data-i="H" data-info="H"></span><input id="m_H" inputmode="decimal"></label>
+      <label class="f"><span data-i="h0" data-info="h0"></span><input id="m_h0" inputmode="decimal"></label>
+      <label class="f"><span data-i="eta" data-info="eta"></span><input id="m_eta" inputmode="decimal"></label>
+      <label class="f"><span data-i="hg" data-info="hg"></span><input id="m_hg" inputmode="decimal"></label>
+
+      <div class="sep" data-i="sep_place"></div>
+      <label class="f full"><span data-i="mode" data-info="mode"></span>
+        <select id="m_mode"><option value="ground" data-i="mode_g"></option><option value="platform" data-i="mode_p"></option></select></label>
+      <label class="f" data-show="platform"><span data-i="z" data-info="z"></span><input id="m_z" inputmode="decimal"></label>
+      <label class="f" data-show="platform"><span data-i="Hb" data-info="Hb"></span><input id="m_Hb" inputmode="decimal"></label>
+      <label class="f" data-show="platform"><span data-i="T1" data-info="T1"></span><input id="m_T1" inputmode="decimal"></label>
+      <label class="f"><span data-i="Ta" data-info="Ta"></span><input id="m_Ta" inputmode="decimal"></label>
+
+      <div class="sep" data-i="sep_fac"></div>
+      <label class="f"><span data-info="gA">γ<sub>a</sub> <span class="u">EC 4.3.5.3</span></span>
+        <select id="m_gA"><option value="1" data-i="gA1"></option><option value="1.5" data-i="gA2"></option></select></label>
+      <label class="f"><span data-info="qa">q<sub>a</sub> <span class="u">EC 4.4</span></span>
+        <select id="m_qa"><option value="1" data-i="qa1"></option><option value="2" data-i="qa2"></option></select></label>
+      <label class="f"><span data-info="gC">γ<sub>CNS</sub> <span class="u">P100 10.3.1.3.1</span></span>
+        <select id="m_gC"><option value="auto">= γI,e</option><option value="1.5" data-i="gC2"></option></select></label>
+      <label class="f"><span data-info="roCat">β<sub>CNS</sub> / q<sub>CNS</sub> <span class="u">P100 Tab. 10.1–10.2</span></span><select id="m_roCat"></select></label>
+
+      <div class="sep" data-i="sep_sup"></div>
+      <label class="f full"><span data-i="sup" data-info="sup"></span>
+        <select id="m_sup">
+          <option value="surf-rect" data-i="sup1"></option>
+          <option value="surf-circ" data-i="sup2"></option>
+          <option value="legs-circ" data-i="sup3"></option>
+          <option value="legs-rect" data-i="sup4"></option>
+          <option value="two" data-i="sup5"></option>
+        </select></label>
+      <label class="f" data-show="surf-rect"><span data-i="bx" data-info="bx"></span><input id="m_bx" inputmode="decimal"></label>
+      <label class="f" data-show="surf-rect"><span data-i="by"></span><input id="m_by" inputmode="decimal"></label>
+      <label class="f" data-show="surf-circ"><span data-i="Ds" data-info="Ds"></span><input id="m_Ds" inputmode="decimal"></label>
+      <label class="f" data-show="surf-rect surf-circ legs-circ legs-rect"><span data-i="n" data-info="n"></span><input id="m_n" inputmode="decimal"></label>
+      <label class="f" data-show="surf-circ legs-circ"><span data-i="Dc" data-info="Dc"></span><input id="m_Dc" inputmode="decimal"></label>
+      <label class="f" data-show="surf-rect legs-rect"><span data-i="ax" data-info="ax"></span><input id="m_ax" inputmode="decimal"></label>
+      <label class="f" data-show="surf-rect legs-rect"><span data-i="ay"></span><input id="m_ay" inputmode="decimal"></label>
+      <label class="f" data-show="two"><span data-i="axis"></span>
+        <select id="m_axis"><option value="Y" data-i="axisY"></option><option value="X" data-i="axisX"></option></select></label>
+      <label class="f" data-show="two"><span data-i="a2" data-info="a2"></span><input id="m_a2" inputmode="decimal"></label>
+      <label class="f" data-show="legs-circ legs-rect two"><span data-i="fa" data-info="fa"></span><input id="m_fa" inputmode="decimal"></label>
+      <label class="f" data-show="legs-circ legs-rect two"><span data-i="fb"></span><input id="m_fb" inputmode="decimal"></label>
+
+      <div class="sep" data-i="sep_plate"></div>
+      <label class="f"><span data-i="pshape" data-info="pshape"></span>
+        <select id="m_pshape"><option value="rect" data-i="ps1"></option><option value="circ" data-i="ps2"></option><option value="none" data-i="ps3"></option></select></label>
+      <label class="f" data-pshow="rect"><span data-i="pB"></span><input id="m_pB" inputmode="decimal"></label>
+      <label class="f" data-pshow="rect"><span data-i="pL"></span><input id="m_pL" inputmode="decimal"></label>
+      <label class="f" data-pshow="circ"><span data-i="pD"></span><input id="m_pD" inputmode="decimal"></label>
+      <label class="f" data-pshow="rect circ"><span data-i="pt" data-info="pt"></span><input id="m_pt" inputmode="decimal"></label>
+      <label class="f full"><span data-i="note"></span><input id="m_note" style="font-family:var(--f-body)"></label>
+    </div>
+    <div class="toolbar" style="margin-top:12px"><button id="b_reset" type="button" data-i="reset"></button></div>
+    <div class="hint" data-i="m_hint"></div>
+  </section>
+</div>
+
+<div class="col">
+  <section class="card">
+    <h2 id="r_title"></h2>
+    <div class="compare">
+      <div class="code ec" id="code_ec"><h3><span data-info="r_ec">Eurocode – F<sub>a</sub></span><span>(4.24)</span></h3><div class="steps" id="r_ec"></div><div class="big" id="r_ecF"></div></div>
+      <div class="code ro" id="code_ro"><h3><span data-info="r_ro">P100 – F<sub>CNS</sub></span><span>(10.1)</span></h3><div class="steps" id="r_ro"></div><div class="big" id="r_roF"></div></div>
+    </div>
+    <div class="design" id="r_design"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-i="checks_h"></h2>
+    <div class="checks" id="r_checks"></div>
+  </section>
+
+  <section class="card">
+    <h2><span data-i="axis_h" data-info="axisvm"></span></h2>
+    <div class="toolbar" style="margin-bottom:8px"><button class="pri" id="b_copy" type="button" data-i="copy"></button><span class="hint" id="copymsg" style="margin:0"></span></div>
+    <div class="tbl"><table><thead><tr><th data-i="th_case"></th><th data-i="th_where"></th><th data-i="th_load"></th><th style="text-align:right" data-i="th_val"></th><th data-i="th_unit"></th></tr></thead><tbody id="r_axis"></tbody></table></div>
+    <div class="hint" data-i="axis_hint"></div>
+  </section>
+
+  <section class="card">
+    <h2><span data-i="plate_h" data-info="plate"></span></h2>
+    <div class="tbl"><table><thead><tr><th data-i="th_qty"></th><th style="text-align:right" data-i="th_x"></th><th style="text-align:right" data-i="th_y"></th><th data-i="th_note"></th></tr></thead><tbody id="r_plate"></tbody></table></div>
+  </section>
+</div>
+</div>
+
+<section class="card">
+  <h2 data-i="all_h"></h2>
+  <div class="tbl"><table><thead><tr><th data-i="th_id"></th><th data-i="th_name"></th><th style="text-align:right">W<sub>a</sub> [kN]</th><th style="text-align:right">F<sub>a</sub> EC [kN]</th><th style="text-align:right">F<sub>CNS</sub> P100 [kN]</th><th style="text-align:right" data-i="th_F"></th><th style="text-align:right">M [kNm]</th><th data-i="th_status"></th></tr></thead><tbody class="click" id="r_all"></tbody></table></div>
+  <div class="hint" data-i="all_hint"></div>
+</section>
+
+<section class="card">
+  <h2 data-i="bg_h"></h2>
+  <div class="two">
+    <div class="notes"><div data-i="bg1"></div><div data-i="bg2"></div><div data-i="bg3"></div></div>
+    <div class="notes"><div data-i="bg4"></div><div data-i="bg5"></div><div data-i="bg6"></div></div>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+const U=s=>` <span class="u">${s}</span>`;
+const L={
+hu:{
+ title:'Gépalap földrengésteher',
+ sub:'Gépekre ható vízszintes szeizmikus erő, horgonyerők és alaplemez-ellenőrzés – két szabvány szerint, egymás mellett',
+ agR:'a<sub>gR</sub> referencia talajgyorsulás'+U('[m/s²]'), gI:'γ<sub>I</sub> fontossági tényező'+U('4.2.5'),
+ gI1:'I. o. – 0,8',gI2:'II. o. – 1,0',gI3:'III. o. – 1,2',gI4:'IV. o. – 1,4',
+ soil:'Altalajosztály (1. típusú spektrum)'+U('3.1. tábl.'), soilinfo:'S · T<sub>B</sub> · T<sub>C</sub> · T<sub>D</sub>'+U('3.2. tábl.'),
+ ec_hint:'a<sub>gR</sub> a helyszín szerint a nemzeti mellékletből (Magyarország: NB melléklet, településenként, g-ben → ×9,81 m/s²). Magyar NA: 1. típusú spektrum (NA3.6), nincs nagyon kis szeizmicitású terület (NA3.5). A kitöltött értékek példák.',
+ ro_h:'Románia', ag:'a<sub>g</sub> tervezési talajgyorsulás'+U('[g] · Fig. 3.1'), gIe:'Fontossági osztály – γ<sub>I,e</sub>'+U('Tab. 4.2'),
+ ro_hint:'Mérgező gázt, robbanóanyagot tartalmazó épület a Tab. 4.2 szerint I. osztály (γ<sub>I,e</sub> = 1,4). Mérgező / robbanó anyagot tartalmazó tartálynál γ<sub>CNS</sub> = 1,5 (10.3.1.3.1) – gépenként állítható.',
+ common_h:'Közös beállítások', drive:'Számítás szabványa', drive_max:'Mindkettő – a nagyobbik', drive_hint:'Magyarországi helyszín: Eurocode. Romániai helyszín: P100. A nem választott szabvány eredménye halványan, összehasonlításként látszik.', drive_ec:'Csak Eurocode', drive_ro:'Csak P100',
+ delta:'δ talp–talaj súrlódás'+U('[°] · EC7 6.5.3(10)'), gc:'Beton térfogatsúlya γ<sub>c</sub>'+U('[kN/m³]'),
+ machine_h:'Gép', add:'Új gép', del:'Törlés', delSure:'Biztosan törlöd?', mid:'Jel', mname:'Megnevezés',
+ Wa:'W<sub>a</sub> üzemi súly'+U('[kN] (önsúly + töltet)'), Wh:'W<sub>horg</sub> horgonyt terhelő súly'+U('[kN] (üres = W<sub>a</sub>)'),
+ sep_cg:'Súlypont', H:'H gép magassága'+U('[m]'), h0:'h<sub>0</sub> lábmagasság'+U('[m]'), eta:'η súlypont aránya (H − h<sub>0</sub>)-ban'+U('[–]'), hg:'h<sub>g</sub> megadott súlypont'+U('[m] (opcionális)'),
+ sep_place:'Elhelyezés', mode:'Hol áll a gép?', mode_g:'Talajon, önálló (dilatált) alaplemezen – z = 0', mode_p:'Épületben: födémen / acél platformon – z > 0',
+ z:'z rögzítési magasság'+U('[m]'), Hb:'H<sub>ép</sub> épületmagasság'+U('[m]'), T1:'T<sub>1</sub> épület periódusa'+U('[s] (EC)'), Ta:'T<sub>a</sub> gép sajátperiódusa'+U('[s] (opcionális)'),
+ sep_fac:'Tényezők', gA1:'1,0 – általános', gA2:'1,5 – mérgező / robbanó tartalom', qa1:'1,0 – konzolos / biztonság javára', qa2:'2,0 – merevített', gC2:'1,5 – mérgező / robbanó',
+ sep_sup:'Alátámasztás', sup:'Hogyan adja át a terhet?', sup1:'Felületen fekszik – téglalap (doboz, skid)', sup2:'Felületen fekszik – kör (fenéklemezes tartály)', sup3:'Lábakon, körön (álló tartály)', sup4:'Lábakon, téglalap kiosztás', sup5:'Két támasz (nyereg)',
+ bx:'b<sub>x</sub> felfekvés X irányban'+U('[m]'), by:'b<sub>y</sub> felfekvés Y irányban'+U('[m]'), Ds:'D<sub>f</sub> felfekvés átmérője'+U('[m]'),
+ n:'n lábak / horgonyok száma'+U('[db]'), Dc:'D<sub>c</sub> horgony- / lábkör átmérője'+U('[m]'), ax:'a<sub>x</sub> lábsorok távolsága X'+U('[m]'), ay:'a<sub>y</sub> lábsorok távolsága Y'+U('[m] (üres = a<sub>x</sub>)'),
+ axis:'Nyergek tengelye', axisY:'Y irányú', axisX:'X irányú', a2:'a nyergek távolsága'+U('[m]'), fa:'Talplemez a'+U('[m] (nyereg: tengely irányú)'), fb:'Talplemez b'+U('[m] (üres = a)'),
+ sep_plate:'Alaplemez', pshape:'Alak', ps1:'Téglalap', ps2:'Kör', ps3:'Nincs / közös', pB:'B (X irány)'+U('[m]'), pL:'L (Y irány)'+U('[m]'), pD:'D átmérő'+U('[m]'), pt:'t vastagság'+U('[m]'), note:'Megjegyzés',
+ reset:'Példák visszaállítása', resetSure:'Kattints újra: minden módosítás elvész',
+ m_hint:'A listában lévő gépek csak példák – írd át őket, vagy töröld és vegyél fel újat. A módosítások ebben a böngészőben megmaradnak.',
+ force_t:'Szeizmikus erő – ', checks_h:'Ellenőrzések', axis_h:'AxisVM terhek – EX és EY teheresetbe', copy:'Táblázat másolása', copied:'Kimásolva – Excelbe beilleszthető.', copyFail:'Másold ki kézzel a kijelölt szöveget.',
+ th_case:'Teherset', th_where:'Hol', th_load:'Teher', th_val:'Érték', th_unit:'Egység',
+ axis_hint:'Előjel: a negatív p<sub>z</sub> lefelé mutat (nyomás). A −X / −Y irányt a kombináció −1-es szorzója adja. Kombinációk: G + ψ<sub>2</sub>·Q + A<sub>Ed</sub> (ψ<sub>2</sub> = 1,0 a töltetre), a két irány E<sub>x</sub> ± 0,3·E<sub>y</sub> és 0,3·E<sub>x</sub> ± E<sub>y</sub> – mindkét szabvány szerint. A felületi támasz legyen csak nyomott (nemlineáris).',
+ plate_h:'Alaplemez a talajon', th_qty:'Mennyiség', th_x:'X irány', th_y:'Y irány', th_note:'Megjegyzés',
+ all_h:'Összes gép', th_id:'Jel', th_name:'Megnevezés', th_F:'F mértékadó [kN]', th_status:'Állapot', all_hint:'Sorra kattintva a gép betöltődik a szerkesztőbe.',
+ bg_h:'Számítási háttér',
+ bg1:'<b>Eurocode (MSZ EN 1998-1 4.3.5).</b> F<sub>a</sub> = S<sub>a</sub>·W<sub>a</sub>·γ<sub>a</sub>/q<sub>a</sub> a gép súlypontjában. S<sub>a</sub> = α·S·[3(1+z/H)/(1+(1−T<sub>a</sub>/T<sub>1</sub>)²) − 0,5] ≥ α·S, α = γ<sub>I</sub>·a<sub>gR</sub>/g.',
+ bg2:'Talajon álló, önálló alapú gépnél z = 0 és nincs felerősítő épület, ezért S<sub>a</sub> = α·S. Ha T<sub>a</sub> ismert, a számoló a rugalmas spektrumot is nézi: S<sub>a</sub> = max(α·S; S<sub>e</sub>(T<sub>a</sub>)/g) – ez mérnöki kiterjesztés.',
+ bg3:'Platformon, ha T<sub>a</sub> nem ismert, a rezonanciás értékkel számol (T<sub>a</sub> = T<sub>1</sub>): S<sub>a</sub> = α·S·[3(1+z/H) − 0,5].',
+ bg4:'<b>P100-1/2013 (10.3.1.2).</b> F<sub>CNS</sub> = γ<sub>CNS</sub>·a<sub>g</sub>·β<sub>CNS</sub>·K<sub>z</sub>·m<sub>CNS</sub>/q<sub>CNS</sub>, K<sub>z</sub> = 1 + 2z/H. Korlátok (10.2): 0,75·γ<sub>CNS</sub>·a<sub>g</sub>·m ≤ F<sub>CNS</sub> ≤ 4·γ<sub>CNS</sub>·a<sub>g</sub>·m.',
+ bg5:'Talajon álló merev gépnél (β = 1,0, q = 2,5, K<sub>z</sub> = 1) az alsó korlát a mértékadó: F<sub>CNS</sub> = 0,75·γ<sub>CNS</sub>·a<sub>g</sub>·W. A P100 a talajhatást a T<sub>C</sub> zónába építi, külön S tényező nincs.',
+ bg6:'<b>Teherátadás:</b> M = F·h<sub>g</sub>. Lábak körön ΔN = 4M/(n·D<sub>c</sub>), téglalapon ΔN = 2M/(n·a). Felületen p<sub>z,max</sub> = 6M/(b²·d), kör 4M/(πR³); két félre osztva 4M/(b²·d), kör 3M/(4R³). Alaplemez: e = M<sub>talp</sub>/N, EC7 6.5.4 (B/3, 0,6R).',
+ newM:'Új gép',
+ st:{ok:'Megfelel',warn:'Figyelmet kér',crit:'Beavatkozás kell',na:'Hiányos adat'}, sts:{ok:'megfelel',warn:'figyelem',crit:'beavatkozás',na:'hiányos'},
+ k_F:'Mértékadó F', k_src:'Forrás', k_hg:'h<sub>g</sub> súlypont', soilL:' talaj',
+ sa_g:'S<sub>a</sub> = α·S (z = 0)', sa_se:'S<sub>a</sub> = S<sub>e</sub>(T<sub>a</sub>)/g', sa_need:'z és H kell', sa_425:'S<sub>a</sub> (4.25)', sa_res:'S<sub>a</sub> (4.25), rezonancia',
+ fromFormula:'(10.1) képletből', bounds:'korlát 0,75…4·γ·a<sub>g</sub>·m', bLo:'alsó korlát (10.2)', bHi:'felső korlát (10.2)', bF:'képlet (10.1)',
+ surfAll:'teljes felfekvés', horiz:'vízszintes, {d} irány', sideHalf:'{s}{d} oldali fél', pzHalf:'p<sub>z</sub> (két félre osztva)', linEdge:'vagy lineárisan: +{d} szél / −{d} szél', pzLin:'±p<sub>z,max</sub>, középen 0',
+ c_upl:'Felemelkedés a felfekvés szélén', p_comp:'nyomott', p_upl:'felemelkedik', c_nosurf:'Felfekvés mérete hiányzik', p_need:'adat kell',
+ leg:'láb', anchor:'horgony', c_legs:'Lábak: húzás felemelkedés ellen', c_anch:'Horgonyok: húzás felemelkedés ellen', p_tens:'húzás {v} kN', c_shear:'Nyírás {l}anként',
+ allFeet:'minden talplemez', sideLegs:'{s}{d} oldali láb(ak)', pzOver:'p<sub>z</sub> a borításból', footGrav:'Gravitáció egy talplemezen: {a} kN/m² (W<sub>a</sub>), ebből horgonyt terhelő {b} kN/m².', foot45:' Ha a földrengés 45°-ban éri a lábakat, mind a négy lábra ±p<sub>z</sub>/√2 jut.',
+ allLegs:'minden láb (csomóponti erő)', anchInfo:'horgonyok (tájékoztató)', dNper:'ΔN horgonyonként, {d}',
+ c_nolegs:'Lábkiosztás hiányzik', c_noanch:'Horgonyok adatai hiányoznak', d_noanch:'n és D<sub>c</sub> – a horgonyok húzásának ellenőrzéséhez',
+ bothSad:'mindkét nyereg talplemeze', sideSad:'{s}{d} oldali nyereg', bothSadHalf:'mindkét nyereg, {s}{d} fél', sadLin:'vagy lineárisan a nyereg hosszán',
+ c_sad:'Nyergek: felemelkedés', gravL:'gravitáció', p_tensA:'húzás – horgony', c_slideSad:'Csúszó nyereg esetén', d_slideSad:'a {d} irányú erő csak a rögzített nyergen: {v} kN/m²', p_ask:'gépésszel egyeztetni',
+ c_nosad:'Nyereg adatai hiányoznak', d_nosad:'a nyergek távolsága és a talplemez mérete kell',
+ full:'teljes felfekvés', part:'részleges elválás', spec_c:'e > 0,6R – különleges óvintézkedés', spec_r:'e > B/3 – különleges óvintézkedés',
+ c_ecc:'Alaplemez külpontossága (EC7 6.5.4)', limit:'határ', c_slide:'Alaplemez csúszása', p_ok:'megfelel', p_nok:'nem felel meg',
+ plateAll:'teljes alaplemez (opcionális)', plateIn:'lemez tehetetlensége, vízszintes', c_noplate:'Alaplemez mérete hiányzik', c_plate:'Alaplemez', d_noplate:'nincs megadva vagy közös lemez – külön ellenőrizendő',
+ c_noF:'Az erő nem számolható', d_noFp:'platformnál z és H kell', c_nohg:'Súlypont hiányzik', d_nohg:'H (vagy h<sub>g</sub>) kell a borítónyomatékhoz', c_none:'Nincs ellenőrizhető adat',
+ noteL:'Megjegyzés', noDist:'Nincs elég adat a teherátadáshoz.', noPlate:'Az alaplemez adatai hiányoznak, vagy a lemez közös – külön ellenőrizendő.',
+ pl_W:'W<sub>alap</sub> lemez önsúlya', pl_F:'F<sub>alap</sub> = a·W<sub>alap</sub>', pl_dim:'Lemezméret a vizsgált irányban', pl_cls:'Felfekvés', nonlin:'AxisVM nemlin.', pl_sl:'Csúszás kihasználtság', pl_sln:'karakterisztikus tg δ, passzív földnyomás nélkül',
+ copyHead:'Gép\tTeherset\tHol\tTeher\tÉrték\tEgység'
+},
+ro:{
+ title:'Fundații utilaje – seism',
+ sub:'Forța seismică orizontală pe utilaje, forțe în ancoraje și verificarea fundației – după două norme, în paralel',
+ agR:'a<sub>gR</sub> accelerația de referință'+U('[m/s²]'), gI:'γ<sub>I</sub> factor de importanță'+U('4.2.5'),
+ gI1:'Cls. I – 0,8',gI2:'Cls. II – 1,0',gI3:'Cls. III – 1,2',gI4:'Cls. IV – 1,4',
+ soil:'Clasa terenului (spectru tip 1)'+U('Tab. 3.1'), soilinfo:'S · T<sub>B</sub> · T<sub>C</sub> · T<sub>D</sub>'+U('Tab. 3.2'),
+ ec_hint:'a<sub>gR</sub> din anexa națională, după amplasament (Ungaria: anexa NB, pe localități, în g → ×9,81 m/s²). NA Ungaria: spectru tip 1 (NA3.6), nu există zone cu seismicitate foarte redusă (NA3.5). Valorile completate sunt exemple.',
+ ro_h:'România', ag:'a<sub>g</sub> accelerația terenului pentru proiectare'+U('[g] · Fig. 3.1'), gIe:'Clasa de importanță – γ<sub>I,e</sub>'+U('Tab. 4.2'),
+ ro_hint:'Clădirile care conțin gaze toxice sau explozivi sunt clasa I (γ<sub>I,e</sub> = 1,4) conform Tab. 4.2. Pentru recipienți cu substanțe toxice sau explozive γ<sub>CNS</sub> = 1,5 (10.3.1.3.1) – se setează pe utilaj.',
+ common_h:'Setări comune', drive:'Norma de calcul', drive_max:'Ambele – maximul', drive_hint:'Amplasament în Ungaria: Eurocode. Amplasament în România: P100. Rezultatul normei neselectate apare estompat, pentru comparație.', drive_ec:'Doar Eurocode', drive_ro:'Doar P100',
+ delta:'δ frecare talpă–teren'+U('[°] · EC7 6.5.3(10)'), gc:'Greutatea volumică a betonului γ<sub>c</sub>'+U('[kN/m³]'),
+ machine_h:'Utilaj', add:'Utilaj nou', del:'Șterge', delSure:'Sigur ștergi?', mid:'Cod', mname:'Denumire',
+ Wa:'W<sub>a</sub> greutate în exploatare'+U('[kN] (proprie + conținut)'), Wh:'W<sub>anc</sub> greutate care stabilizează ancorajele'+U('[kN] (gol = W<sub>a</sub>)'),
+ sep_cg:'Centrul de greutate', H:'H înălțimea utilajului'+U('[m]'), h0:'h<sub>0</sub> înălțimea picioarelor'+U('[m]'), eta:'η poziția CG în (H − h<sub>0</sub>)'+U('[–]'), hg:'h<sub>g</sub> CG impus'+U('[m] (opțional)'),
+ sep_place:'Amplasare', mode:'Unde este amplasat utilajul?', mode_g:'Pe teren, pe fundație proprie (rost) – z = 0', mode_p:'În clădire: pe planșeu / platformă metalică – z > 0',
+ z:'z cota de prindere'+U('[m]'), Hb:'H înălțimea clădirii'+U('[m]'), T1:'T<sub>1</sub> perioada clădirii'+U('[s] (EC)'), Ta:'T<sub>a</sub> perioada utilajului'+U('[s] (opțional)'),
+ sep_fac:'Factori', gA1:'1,0 – general', gA2:'1,5 – conținut toxic / exploziv', qa1:'1,0 – consolă / acoperitor', qa2:'2,0 – contravântuit', gC2:'1,5 – toxic / exploziv',
+ sep_sup:'Rezemare', sup:'Cum transmite încărcarea?', sup1:'Rezemat pe suprafață – dreptunghi (container, skid)', sup2:'Rezemat pe suprafață – cerc (rezervor cu fund plat)', sup3:'Pe picioare, pe cerc (rezervor vertical)', sup4:'Pe picioare, dispunere dreptunghiulară', sup5:'Două reazeme (șei)',
+ bx:'b<sub>x</sub> rezemare pe direcția X'+U('[m]'), by:'b<sub>y</sub> rezemare pe direcția Y'+U('[m]'), Ds:'D<sub>f</sub> diametrul rezemării'+U('[m]'),
+ n:'n număr picioare / ancore'+U('[buc]'), Dc:'D<sub>c</sub> diametrul cercului ancorelor'+U('[m]'), ax:'a<sub>x</sub> distanța între șiruri X'+U('[m]'), ay:'a<sub>y</sub> distanța între șiruri Y'+U('[m] (gol = a<sub>x</sub>)'),
+ axis:'Axa șeilor', axisY:'Direcția Y', axisX:'Direcția X', a2:'a distanța între șei'+U('[m]'), fa:'Placă de bază a'+U('[m] (șa: pe direcția axei)'), fb:'Placă de bază b'+U('[m] (gol = a)'),
+ sep_plate:'Fundația', pshape:'Formă', ps1:'Dreptunghi', ps2:'Cerc', ps3:'Fără / comună', pB:'B (direcția X)'+U('[m]'), pL:'L (direcția Y)'+U('[m]'), pD:'D diametru'+U('[m]'), pt:'t grosime'+U('[m]'), note:'Observație',
+ reset:'Restabilește exemplele', resetSure:'Apasă din nou: toate modificările se pierd',
+ m_hint:'Utilajele din listă sunt doar exemple – modifică-le sau șterge-le și adaugă altele. Modificările se păstrează în acest browser.',
+ force_t:'Forța seismică – ', checks_h:'Verificări', axis_h:'Încărcări AxisVM – ipotezele EX și EY', copy:'Copiază tabelul', copied:'Copiat – se poate lipi în Excel.', copyFail:'Copiază manual textul selectat.',
+ th_case:'Ipoteza', th_where:'Unde', th_load:'Încărcare', th_val:'Valoare', th_unit:'Unitate',
+ axis_hint:'Semn: p<sub>z</sub> negativ este în jos (compresiune). Direcțiile −X / −Y se obțin cu factorul −1 în combinație. Combinații: G + ψ<sub>2</sub>·Q + A<sub>Ed</sub> (ψ<sub>2</sub> = 1,0 pentru conținut), direcțiile E<sub>x</sub> ± 0,3·E<sub>y</sub> și 0,3·E<sub>x</sub> ± E<sub>y</sub> – după ambele norme. Reazemul de suprafață doar la compresiune (neliniar).',
+ plate_h:'Fundația pe teren', th_qty:'Mărime', th_x:'Direcția X', th_y:'Direcția Y', th_note:'Observație',
+ all_h:'Toate utilajele', th_id:'Cod', th_name:'Denumire', th_F:'F de calcul [kN]', th_status:'Stare', all_hint:'Click pe rând pentru a încărca utilajul în editor.',
+ bg_h:'Baza de calcul',
+ bg1:'<b>Eurocode (MSZ EN 1998-1 4.3.5).</b> F<sub>a</sub> = S<sub>a</sub>·W<sub>a</sub>·γ<sub>a</sub>/q<sub>a</sub> în centrul de greutate al utilajului. S<sub>a</sub> = α·S·[3(1+z/H)/(1+(1−T<sub>a</sub>/T<sub>1</sub>)²) − 0,5] ≥ α·S, α = γ<sub>I</sub>·a<sub>gR</sub>/g.',
+ bg2:'Pentru utilaje pe teren, pe fundație proprie, z = 0 și nu există clădire care să amplifice mișcarea, deci S<sub>a</sub> = α·S. Dacă T<sub>a</sub> este cunoscut, se verifică și spectrul elastic: S<sub>a</sub> = max(α·S; S<sub>e</sub>(T<sub>a</sub>)/g) – extensie inginerească.',
+ bg3:'Pe platformă, dacă T<sub>a</sub> nu este cunoscut, se ia valoarea de rezonanță (T<sub>a</sub> = T<sub>1</sub>): S<sub>a</sub> = α·S·[3(1+z/H) − 0,5].',
+ bg4:'<b>P100-1/2013 (10.3.1.2).</b> F<sub>CNS</sub> = γ<sub>CNS</sub>·a<sub>g</sub>·β<sub>CNS</sub>·K<sub>z</sub>·m<sub>CNS</sub>/q<sub>CNS</sub>, K<sub>z</sub> = 1 + 2z/H. Limite (10.2): 0,75·γ<sub>CNS</sub>·a<sub>g</sub>·m ≤ F<sub>CNS</sub> ≤ 4·γ<sub>CNS</sub>·a<sub>g</sub>·m.',
+ bg5:'Pentru utilaje rigide pe teren (β = 1,0, q = 2,5, K<sub>z</sub> = 1) limita inferioară este determinantă: F<sub>CNS</sub> = 0,75·γ<sub>CNS</sub>·a<sub>g</sub>·W. P100 include efectul terenului prin zona T<sub>C</sub>, fără factor S separat.',
+ bg6:'<b>Transmiterea încărcărilor:</b> M = F·h<sub>g</sub>. Picioare pe cerc ΔN = 4M/(n·D<sub>c</sub>), dreptunghi ΔN = 2M/(n·a). Pe suprafață p<sub>z,max</sub> = 6M/(b²·d), cerc 4M/(πR³); pe două jumătăți 4M/(b²·d), cerc 3M/(4R³). Fundație: e = M<sub>talpă</sub>/N, EC7 6.5.4 (B/3, 0,6R).',
+ newM:'Utilaj nou',
+ st:{ok:'Verifică',warn:'Atenție',crit:'Necesită măsuri',na:'Date incomplete'}, sts:{ok:'verifică',warn:'atenție',crit:'măsuri',na:'incomplet'},
+ k_F:'F de calcul', k_src:'Sursa', k_hg:'h<sub>g</sub> CG', soilL:' teren',
+ sa_g:'S<sub>a</sub> = α·S (z = 0)', sa_se:'S<sub>a</sub> = S<sub>e</sub>(T<sub>a</sub>)/g', sa_need:'z și H necesare', sa_425:'S<sub>a</sub> (4.25)', sa_res:'S<sub>a</sub> (4.25), rezonanță',
+ fromFormula:'din relația (10.1)', bounds:'limite 0,75…4·γ·a<sub>g</sub>·m', bLo:'limita inferioară (10.2)', bHi:'limita superioară (10.2)', bF:'relația (10.1)',
+ surfAll:'toată suprafața de rezemare', horiz:'orizontal, direcția {d}', sideHalf:'jumătatea {s}{d}', pzHalf:'p<sub>z</sub> (pe două jumătăți)', linEdge:'sau liniar: marginea +{d} / −{d}', pzLin:'±p<sub>z,max</sub>, 0 la mijloc',
+ c_upl:'Ridicare la marginea rezemării', p_comp:'comprimat', p_upl:'se ridică', c_nosurf:'Lipsește dimensiunea rezemării', p_need:'date necesare',
+ leg:'picior', anchor:'ancoră', c_legs:'Picioare: întindere la ridicare', c_anch:'Ancore: întindere la ridicare', p_tens:'întindere {v} kN', c_shear:'Forfecare pe {l}',
+ allFeet:'toate plăcile de bază', sideLegs:'picioarele {s}{d}', pzOver:'p<sub>z</sub> din răsturnare', footGrav:'Gravitație pe o placă: {a} kN/m² (W<sub>a</sub>), din care stabilizator pentru ancore {b} kN/m².', foot45:' Dacă seismul acționează la 45°, pe toate patru picioarele revine ±p<sub>z</sub>/√2.',
+ allLegs:'toate picioarele (forță nodală)', anchInfo:'ancore (informativ)', dNper:'ΔN pe ancoră, {d}',
+ c_nolegs:'Lipsește dispunerea picioarelor', c_noanch:'Lipsesc datele ancorelor', d_noanch:'n și D<sub>c</sub> – pentru verificarea întinderii în ancore',
+ bothSad:'plăcile ambelor șei', sideSad:'șaua {s}{d}', bothSadHalf:'ambele șei, jumătatea {s}{d}', sadLin:'sau liniar pe lungimea șeii',
+ c_sad:'Șei: ridicare', gravL:'gravitație', p_tensA:'întindere – ancoră', c_slideSad:'Dacă o șa este glisantă', d_slideSad:'forța pe direcția {d} doar pe șaua fixă: {v} kN/m²', p_ask:'de stabilit cu tehnologul',
+ c_nosad:'Lipsesc datele șeilor', d_nosad:'distanța între șei și dimensiunea plăcii',
+ full:'rezemare pe toată talpa', part:'desprindere parțială', spec_c:'e > 0,6R – măsuri speciale', spec_r:'e > B/3 – măsuri speciale',
+ c_ecc:'Excentricitatea fundației (EC7 6.5.4)', limit:'limite', c_slide:'Lunecarea fundației', p_ok:'verifică', p_nok:'nu verifică',
+ plateAll:'toată fundația (opțional)', plateIn:'inerția fundației, orizontal', c_noplate:'Lipsesc dimensiunile fundației', c_plate:'Fundația', d_noplate:'nedefinită sau comună – de verificat separat',
+ c_noF:'Forța nu poate fi calculată', d_noFp:'pe platformă sunt necesare z și H', c_nohg:'Lipsește centrul de greutate', d_nohg:'H (sau h<sub>g</sub>) pentru momentul de răsturnare', c_none:'Nu există date de verificat',
+ noteL:'Observație', noDist:'Date insuficiente pentru transmiterea încărcărilor.', noPlate:'Lipsesc datele fundației sau fundația este comună – de verificat separat.',
+ pl_W:'W<sub>fund</sub> greutatea fundației', pl_F:'F<sub>fund</sub> = a·W<sub>fund</sub>', pl_dim:'Dimensiunea pe direcția analizată', pl_cls:'Rezemare', nonlin:'AxisVM neliniar', pl_sl:'Grad de utilizare la lunecare', pl_sln:'tg δ caracteristic, fără împingere pasivă',
+ copyHead:'Utilaj\tIpoteza\tUnde\tÎncărcare\tValoare\tUnitate'
+},
+en:{
+ title:'Equipment Foundation Seismic',
+ sub:'Horizontal seismic force on equipment, anchor forces and foundation slab checks – to two codes, side by side',
+ agR:'a<sub>gR</sub> reference ground acceleration'+U('[m/s²]'), gI:'γ<sub>I</sub> importance factor'+U('4.2.5'),
+ gI1:'Class I – 0.8',gI2:'Class II – 1.0',gI3:'Class III – 1.2',gI4:'Class IV – 1.4',
+ soil:'Ground type (Type 1 spectrum)'+U('Table 3.1'), soilinfo:'S · T<sub>B</sub> · T<sub>C</sub> · T<sub>D</sub>'+U('Table 3.2'),
+ ec_hint:'a<sub>gR</sub> from the National Annex for the site (Hungary: Annex NB, by town, in g → ×9.81 m/s²). Hungarian NA: Type 1 spectrum (NA3.6), no very-low-seismicity areas (NA3.5). The values filled in are examples.',
+ ro_h:'Romania', ag:'a<sub>g</sub> design ground acceleration'+U('[g] · Fig. 3.1'), gIe:'Importance class – γ<sub>I,e</sub>'+U('Tab. 4.2'),
+ ro_hint:'Buildings containing toxic gases or explosives are Class I (γ<sub>I,e</sub> = 1.4) per Tab. 4.2. For vessels holding toxic or explosive substances γ<sub>CNS</sub> = 1.5 (10.3.1.3.1) – set per machine.',
+ common_h:'Common settings', drive:'Design code', drive_max:'Both – the larger', drive_hint:'Site in Hungary: Eurocode. Site in Romania: P100. The other code’s result stays visible, dimmed, for comparison.', drive_ec:'Eurocode only', drive_ro:'P100 only',
+ delta:'δ base–soil friction'+U('[°] · EC7 6.5.3(10)'), gc:'Concrete unit weight γ<sub>c</sub>'+U('[kN/m³]'),
+ machine_h:'Machine', add:'New machine', del:'Delete', delSure:'Delete this machine?', mid:'Tag', mname:'Description',
+ Wa:'W<sub>a</sub> operating weight'+U('[kN] (self + contents)'), Wh:'W<sub>anch</sub> weight holding anchors down'+U('[kN] (empty = W<sub>a</sub>)'),
+ sep_cg:'Centre of gravity', H:'H machine height'+U('[m]'), h0:'h<sub>0</sub> leg height'+U('[m]'), eta:'η CG position within (H − h<sub>0</sub>)'+U('[–]'), hg:'h<sub>g</sub> given CG height'+U('[m] (optional)'),
+ sep_place:'Location', mode:'Where does the machine stand?', mode_g:'On the ground, on its own (separated) slab – z = 0', mode_p:'In a building: on a floor / steel platform – z > 0',
+ z:'z attachment height'+U('[m]'), Hb:'H building height'+U('[m]'), T1:'T<sub>1</sub> building period'+U('[s] (EC)'), Ta:'T<sub>a</sub> machine period'+U('[s] (optional)'),
+ sep_fac:'Factors', gA1:'1.0 – general', gA2:'1.5 – toxic / explosive contents', qa1:'1.0 – cantilever / conservative', qa2:'2.0 – braced', gC2:'1.5 – toxic / explosive',
+ sep_sup:'Support', sup:'How is the load transferred?', sup1:'Bearing on a surface – rectangle (box, skid)', sup2:'Bearing on a surface – circle (flat-bottom tank)', sup3:'On legs, on a circle (vertical tank)', sup4:'On legs, rectangular layout', sup5:'Two supports (saddles)',
+ bx:'b<sub>x</sub> bearing in X'+U('[m]'), by:'b<sub>y</sub> bearing in Y'+U('[m]'), Ds:'D<sub>f</sub> bearing diameter'+U('[m]'),
+ n:'n legs / anchors'+U('[pcs]'), Dc:'D<sub>c</sub> anchor / leg circle diameter'+U('[m]'), ax:'a<sub>x</sub> leg row spacing X'+U('[m]'), ay:'a<sub>y</sub> leg row spacing Y'+U('[m] (empty = a<sub>x</sub>)'),
+ axis:'Saddle axis', axisY:'Y direction', axisX:'X direction', a2:'a saddle spacing'+U('[m]'), fa:'Base plate a'+U('[m] (saddle: along axis)'), fb:'Base plate b'+U('[m] (empty = a)'),
+ sep_plate:'Foundation slab', pshape:'Shape', ps1:'Rectangle', ps2:'Circle', ps3:'None / shared', pB:'B (X direction)'+U('[m]'), pL:'L (Y direction)'+U('[m]'), pD:'D diameter'+U('[m]'), pt:'t thickness'+U('[m]'), note:'Note',
+ reset:'Restore examples', resetSure:'Click again: all edits will be lost',
+ m_hint:'The machines in the list are examples only – edit them, or delete them and add your own. Edits are kept in this browser.',
+ force_t:'Seismic force – ', checks_h:'Checks', axis_h:'AxisVM loads – EX and EY load cases', copy:'Copy table', copied:'Copied – paste into Excel.', copyFail:'Copy the selected text manually.',
+ th_case:'Load case', th_where:'Where', th_load:'Load', th_val:'Value', th_unit:'Unit',
+ axis_hint:'Sign: negative p<sub>z</sub> acts downward (compression). −X / −Y come from a −1 factor in the combination. Combinations: G + ψ<sub>2</sub>·Q + A<sub>Ed</sub> (ψ<sub>2</sub> = 1.0 for contents), directions E<sub>x</sub> ± 0.3·E<sub>y</sub> and 0.3·E<sub>x</sub> ± E<sub>y</sub> – for both codes. Surface support compression-only (nonlinear).',
+ plate_h:'Foundation slab on soil', th_qty:'Quantity', th_x:'X direction', th_y:'Y direction', th_note:'Note',
+ all_h:'All machines', th_id:'Tag', th_name:'Description', th_F:'Governing F [kN]', th_status:'Status', all_hint:'Click a row to load the machine into the editor.',
+ bg_h:'Calculation basis',
+ bg1:'<b>Eurocode (MSZ EN 1998-1 4.3.5).</b> F<sub>a</sub> = S<sub>a</sub>·W<sub>a</sub>·γ<sub>a</sub>/q<sub>a</sub> at the machine’s centre of gravity. S<sub>a</sub> = α·S·[3(1+z/H)/(1+(1−T<sub>a</sub>/T<sub>1</sub>)²) − 0.5] ≥ α·S, α = γ<sub>I</sub>·a<sub>gR</sub>/g.',
+ bg2:'For a machine on the ground on its own slab, z = 0 and no building amplifies the motion, so S<sub>a</sub> = α·S. If T<sub>a</sub> is known, the elastic spectrum is also checked: S<sub>a</sub> = max(α·S; S<sub>e</sub>(T<sub>a</sub>)/g) – an engineering extension.',
+ bg3:'On a platform with unknown T<sub>a</sub>, the resonant value is used (T<sub>a</sub> = T<sub>1</sub>): S<sub>a</sub> = α·S·[3(1+z/H) − 0.5].',
+ bg4:'<b>P100-1/2013 (10.3.1.2).</b> F<sub>CNS</sub> = γ<sub>CNS</sub>·a<sub>g</sub>·β<sub>CNS</sub>·K<sub>z</sub>·m<sub>CNS</sub>/q<sub>CNS</sub>, K<sub>z</sub> = 1 + 2z/H. Limits (10.2): 0.75·γ<sub>CNS</sub>·a<sub>g</sub>·m ≤ F<sub>CNS</sub> ≤ 4·γ<sub>CNS</sub>·a<sub>g</sub>·m.',
+ bg5:'For rigid equipment on the ground (β = 1.0, q = 2.5, K<sub>z</sub> = 1) the lower limit governs: F<sub>CNS</sub> = 0.75·γ<sub>CNS</sub>·a<sub>g</sub>·W. P100 covers site effects through the T<sub>C</sub> zone, with no separate S factor.',
+ bg6:'<b>Load transfer:</b> M = F·h<sub>g</sub>. Legs on a circle ΔN = 4M/(n·D<sub>c</sub>), rectangular ΔN = 2M/(n·a). On a surface p<sub>z,max</sub> = 6M/(b²·d), circle 4M/(πR³); split in two halves 4M/(b²·d), circle 3M/(4R³). Slab: e = M<sub>base</sub>/N, EC7 6.5.4 (B/3, 0.6R).',
+ newM:'New machine',
+ st:{ok:'Satisfied',warn:'Needs attention',crit:'Action needed',na:'Incomplete data'}, sts:{ok:'ok',warn:'attention',crit:'action',na:'incomplete'},
+ k_F:'Governing F', k_src:'Source', k_hg:'h<sub>g</sub> CG', soilL:' ground',
+ sa_g:'S<sub>a</sub> = α·S (z = 0)', sa_se:'S<sub>a</sub> = S<sub>e</sub>(T<sub>a</sub>)/g', sa_need:'z and H needed', sa_425:'S<sub>a</sub> (4.25)', sa_res:'S<sub>a</sub> (4.25), resonance',
+ fromFormula:'from (10.1)', bounds:'limits 0.75…4·γ·a<sub>g</sub>·m', bLo:'lower limit (10.2)', bHi:'upper limit (10.2)', bF:'formula (10.1)',
+ surfAll:'whole bearing area', horiz:'horizontal, {d} direction', sideHalf:'{s}{d} half', pzHalf:'p<sub>z</sub> (two halves)', linEdge:'or linear: +{d} edge / −{d} edge', pzLin:'±p<sub>z,max</sub>, zero at centre',
+ c_upl:'Uplift at the bearing edge', p_comp:'compression', p_upl:'uplift', c_nosurf:'Bearing size missing', p_need:'data needed',
+ leg:'leg', anchor:'anchor', c_legs:'Legs: tension against uplift', c_anch:'Anchors: tension against uplift', p_tens:'tension {v} kN', c_shear:'Shear per {l}',
+ allFeet:'all base plates', sideLegs:'{s}{d} side leg(s)', pzOver:'p<sub>z</sub> from overturning', footGrav:'Gravity on one base plate: {a} kN/m² (W<sub>a</sub>), of which holding anchors {b} kN/m².', foot45:' If the earthquake hits the legs at 45°, each of the four legs gets ±p<sub>z</sub>/√2.',
+ allLegs:'all legs (nodal force)', anchInfo:'anchors (for information)', dNper:'ΔN per anchor, {d}',
+ c_nolegs:'Leg layout missing', c_noanch:'Anchor data missing', d_noanch:'n and D<sub>c</sub> – to check anchor tension',
+ bothSad:'base plates of both saddles', sideSad:'{s}{d} saddle', bothSadHalf:'both saddles, {s}{d} half', sadLin:'or linear along the saddle length',
+ c_sad:'Saddles: uplift', gravL:'gravity', p_tensA:'tension – anchor', c_slideSad:'If one saddle is sliding', d_slideSad:'the {d}-direction force acts on the fixed saddle only: {v} kN/m²', p_ask:'check with process engineer',
+ c_nosad:'Saddle data missing', d_nosad:'saddle spacing and base plate size needed',
+ full:'full contact', part:'partial lift-off', spec_c:'e > 0.6R – special measures', spec_r:'e > B/3 – special measures',
+ c_ecc:'Slab eccentricity (EC7 6.5.4)', limit:'limits', c_slide:'Slab sliding', p_ok:'satisfied', p_nok:'not satisfied',
+ plateAll:'whole slab (optional)', plateIn:'slab inertia, horizontal', c_noplate:'Slab dimensions missing', c_plate:'Foundation slab', d_noplate:'not given or shared – check separately',
+ c_noF:'Force cannot be calculated', d_noFp:'z and H needed on a platform', c_nohg:'Centre of gravity missing', d_nohg:'H (or h<sub>g</sub>) needed for the overturning moment', c_none:'Nothing to check yet',
+ noteL:'Note', noDist:'Not enough data for load transfer.', noPlate:'Slab data missing or the slab is shared – check separately.',
+ pl_W:'W<sub>slab</sub> slab self-weight', pl_F:'F<sub>slab</sub> = a·W<sub>slab</sub>', pl_dim:'Slab size in the checked direction', pl_cls:'Contact', nonlin:'AxisVM nonlinear', pl_sl:'Sliding utilisation', pl_sln:'characteristic tan δ, passive pressure ignored',
+ copyHead:'Machine\tLoad case\tWhere\tLoad\tValue\tUnit'
+}};
+const INFO={
+hu:{
+ drive:'<b>Melyik szabvány adja a terhet?</b> Eurocode: MSZ EN 1998-1 4.3.5 (magyarországi helyszín, magyar NA). P100: P100-1/2013 10. fejezet (romániai helyszín – ott ez a kötelező). „Mindkettő” esetén a nagyobb erővel számol tovább.',
+ agR:'<b>MSZ EN 1998-1 3.2.1 és NB melléklet.</b> Az „A” talajra vonatkozó referencia csúcsgyorsulás, 475 éves visszatérési periódus. Az NB melléklet településenként adja meg g-ben; m/s²-be ×9,81.',
+ gI:'<b>MSZ EN 1998-1 4.2.5, 4.3. táblázat.</b> Az épület fontossági osztálya. a<sub>g</sub> = γ<sub>I</sub>·a<sub>gR</sub>. Szokásos ipari épület: II. osztály (1,0).',
+ soil:'<b>MSZ EN 1998-1 3.1.2, 3.1. táblázat.</b> A felső 30 m alapján (v<sub>s,30</sub>, N<sub>SPT</sub> vagy c<sub>u</sub>). Általában a geotechnikai szakvélemény adja meg. Bizonytalanság esetén a D a biztonság javára téved.',
+ soilinfo:'<b>MSZ EN 1998-1 3.2. táblázat, NA3.6.</b> A magyar NA szerint 1. típusú spektrum kell. S a talajtényező, T<sub>B</sub>, T<sub>C</sub>, T<sub>D</sub> a spektrum sarokpontjai.',
+ ag:'<b>P100-1/2013 3.1, Figura 3.1.</b> Tervezési talajgyorsulás g-ben, 225 éves visszatérési periódus, a térképről (0,10–0,40 g). A talajhatás a T<sub>C</sub> zónában van, külön S tényező nincs.',
+ gIe:'<b>P100-1/2013 4.4.5, Tabelul 4.2.</b> I: 1,4 (pl. mérgező gázt, robbanóanyagot tartalmazó épület) · II: 1,2 · III: 1,0 (szokásos) · IV: 0,8.',
+ delta:'<b>MSZ EN 1997-1 6.5.3 (10).</b> Helyszínen betonozott alapnál a talp és a talaj súrlódási szöge δ = φ<sub>cv</sub> (kritikus állapotbeli súrlódási szög).',
+ gc:'Vasbeton térfogatsúlya, MSZ EN 1991-1-1 A melléklet: 25 kN/m³.',
+ Wa:'<b>EC: MSZ EN 1998-1 4.3.5.2 · P100: 10.3.1.2 (m<sub>CNS</sub>).</b> A gép súlya üzem közben: önsúly + töltet. Szeizmikus állapotban ψ<sub>2</sub> = 1,0 a töltetre, mert a tartály mindig tele van. A gyártói terhelési adatlap üzemi (operating) értéke.',
+ Wh:'Fenéklemezes tartálynál a töltet a fenéklemezen ül, a horgonyt felemelkedés ellen csak az üres súly tartja le. Ide az üres önsúly kerül; ha üres, W<sub>a</sub>-val számol.',
+ H:'A gép teljes magassága a lemez felső síkjától. Ebből számolja a súlypontot.',
+ h0:'Lábas gépnél a láb hossza (lemez – tartály alja). Felületen fekvő gépnél 0.',
+ eta:'A súlypont helye a gép testén belül. 0,5 = a test közepe (egyenletes tömegeloszlás). A súlypont: h<sub>g</sub> = h<sub>0</sub> + η·(H − h<sub>0</sub>).',
+ hg:'Ha a gyártó megadja a súlypont magasságát, ide írd – felülírja a becslést.',
+ mode:'<b>EC 4.3.5 (4.25) · P100 10.3.1.2 (K<sub>z</sub>).</b> Talajon, dilatált önálló alapon: z = 0, nincs felerősítés. Födémen / platformon: a mozgást az épület felerősíti, ezért z, H és (EC-nél) T<sub>1</sub> kell.',
+ z:'A gép rögzítési pontjának magassága az alapozás felett. EC (4.25): z/H · P100: K<sub>z</sub> = 1 + 2z/H.',
+ Hb:'Az épület magassága az alapozástól (EC) / a tető átlagos magassága (P100).',
+ T1:'<b>EC (4.25).</b> Az épület alaprezgésének periódusa a vizsgált irányban. Ha T<sub>a</sub> nincs megadva, a számoló rezonanciát feltételez (biztonság javára).',
+ Ta:'<b>EC (4.25), 3.2.2.2.</b> A gép saját rezgésének periódusa (gyártói adat). Üresen: merev gép. Talajon álló gépnél megadva a rugalmas spektrumból is ellenőriz (mérnöki kiterjesztés).',
+ gA:'<b>MSZ EN 1998-1 4.3.5.3.</b> γ<sub>a</sub> ≥ 1,5 a közbiztonságot veszélyeztető mérgező vagy robbanó anyagot tartalmazó tartályoknál és életvédelmi gépek lehorgonyzásánál; egyébként 1,0.',
+ qa:'<b>MSZ EN 1998-1 4.4. táblázat.</b> 1,0: konzolszerű lábakon álló tartály, amelynek hosszának több mint fele merevítetlen. 2,0: kevesebb mint fele merevítetlen, vagy ki van merevítve. Kétség esetén 1,0.',
+ gC:'<b>P100-1/2013 10.3.1.3.1.</b> γ<sub>CNS</sub> = 1,5 többek között mérgező vagy robbanó anyagot tartalmazó recipienseknél és tartályoknál. Minden más esetben γ<sub>CNS</sub> = γ<sub>I,e</sub>.',
+ roCat:'<b>P100-1/2013 Tabelul 10.2 (B, C) és 10.1 (A).</b> β<sub>CNS</sub> a dinamikus felerősítés, q<sub>CNS</sub> a viselkedési tényező. Merev, rezgésszigetelés nélküli gépnél 1,0 / 2,5.',
+ sup:'A gép hogyan adja át a terhet az alaplemeznek. Felületen fekvő gépnél felületi terhek, lábas gépnél talplemezenkénti terhek, nyeregnél két talplemez.',
+ bx:'A gép felfekvési felületének mérete X és Y irányban. Ide csak akkor írj, ha az egész gép egy felületen fekszik – lábas gépnél a talplemez külön mezőbe kerül.',
+ Ds:'Fenéklemezes tartály fenekének átmérője.',
+ n:'Lábak vagy horgonyok száma. Felületen fekvő gépnél opcionális – ha megadod, a horgonyok húzását is ellenőrzi.',
+ Dc:'Kör kiosztásnál a lábak / horgonyok tengelyén átmenő kör ÁTMÉRŐJE (nem a kerülete).',
+ ax:'Téglalap kiosztásnál a két lábsor tengelytávolsága X és Y irányban.',
+ a2:'A két nyereg tengelytávolsága a tartály tengelye mentén.',
+ fa:'A láb / nyereg talplemezének mérete. Ezen a felületen adja ki az AxisVM-be beírandó felületi terheket.',
+ pshape:'A gép alatti önálló vasbeton alaplemez. Ha a lemez közös más géppel, válaszd a „Nincs / közös” lehetőséget, és a lemezt külön ellenőrizd.',
+ pt:'Lemezvastagság – a lemez önsúlyához, tehetetlenségi erejéhez és az alapsíki nyomatékhoz kell.',
+ r_ec:'<b>MSZ EN 1998-1 4.3.5.2, (4.24)–(4.25).</b> F<sub>a</sub> = S<sub>a</sub>·W<sub>a</sub>·γ<sub>a</sub>/q<sub>a</sub>, a gép súlypontjában, a legkedvezőtlenebb irányban. S<sub>a</sub> nem lehet kisebb, mint α·S.',
+ r_ro:'<b>P100-1/2013 10.3.1.2, (10.1)–(10.2).</b> F<sub>CNS</sub> = γ<sub>CNS</sub>·a<sub>g</sub>·β<sub>CNS</sub>·K<sub>z</sub>·m<sub>CNS</sub>/q<sub>CNS</sub>, korlátozva 0,75…4·γ<sub>CNS</sub>·a<sub>g</sub>·m<sub>CNS</sub> közé. Utilajoknál koncentrált erő a súlypontban (10.3.1.2 (6)).',
+ axisvm:'Az EX és EY teheresetbe beírandó terhek. Kombináció: EC – MSZ EN 1990 6.4.3.4 (6.12b), irányok MSZ EN 1998-1 4.3.3.5.1; P100 – CR 0-2012 és P100-1 4.5.3.6 (30%-os szabály).',
+ plate:'<b>MSZ EN 1997-1 6.5.4.</b> Különleges óvintézkedés kell, ha e > B/3 (téglalap) vagy e > 0,6R (kör). Csúszás: 6.5.3. A lemez a talajjal együtt mozog, gyorsulása α·S (EC) vagy γ<sub>I,e</sub>·a<sub>g</sub> (P100). Romániai helyszínen az alap ellenőrzését az NP 112-2014 szerint is el kell végezni.'
+},
+ro:{
+ drive:'<b>Ce normă dă încărcarea?</b> Eurocode: MSZ EN 1998-1 4.3.5 (amplasament în Ungaria, NA maghiară). P100: P100-1/2013 cap. 10 (amplasament în România – obligatoriu). „Ambele”: se continuă cu forța mai mare.',
+ agR:'<b>MSZ EN 1998-1 3.2.1 și anexa NB.</b> Accelerația de vârf de referință pe teren tip A, IMR 475 ani. Anexa NB o dă pe localități în g; în m/s² ×9,81.',
+ gI:'<b>MSZ EN 1998-1 4.2.5, Tabelul 4.3.</b> Clasa de importanță a clădirii. a<sub>g</sub> = γ<sub>I</sub>·a<sub>gR</sub>. Clădire industrială obișnuită: clasa II (1,0).',
+ soil:'<b>MSZ EN 1998-1 3.1.2, Tabelul 3.1.</b> Pe baza primilor 30 m (v<sub>s,30</sub>, N<sub>SPT</sub> sau c<sub>u</sub>). De regulă din studiul geotehnic. În caz de incertitudine D este acoperitor.',
+ soilinfo:'<b>MSZ EN 1998-1 Tabelul 3.2, NA3.6.</b> NA maghiară cere spectrul tip 1. S – factorul de teren; T<sub>B</sub>, T<sub>C</sub>, T<sub>D</sub> – perioadele de colț.',
+ ag:'<b>P100-1/2013 3.1, Figura 3.1.</b> Accelerația terenului pentru proiectare în g, IMR 225 ani, din hartă (0,10–0,40 g). Efectul terenului este inclus prin zona T<sub>C</sub>, fără factor S.',
+ gIe:'<b>P100-1/2013 4.4.5, Tabelul 4.2.</b> I: 1,4 (ex. clădiri cu gaze toxice, explozivi) · II: 1,2 · III: 1,0 (curente) · IV: 0,8.',
+ delta:'<b>MSZ EN 1997-1 6.5.3 (10).</b> Pentru fundații turnate pe loc, unghiul de frecare talpă–teren δ = φ<sub>cv</sub> (unghiul de frecare la starea critică).',
+ gc:'Greutatea volumică a betonului armat, SR EN 1991-1-1 Anexa A: 25 kN/m³.',
+ Wa:'<b>EC: MSZ EN 1998-1 4.3.5.2 · P100: 10.3.1.2 (m<sub>CNS</sub>).</b> Masa maximă în exploatare: proprie + conținut. În gruparea seismică ψ<sub>2</sub> = 1,0 pentru conținut (rezervorul este plin). Valoarea „operating” din fișa de încărcări a furnizorului.',
+ Wh:'La rezervoare cu fund plat lichidul apasă pe fund, iar ancorele sunt stabilizate doar de greutatea proprie goală. Se introduce greutatea goală; dacă e gol, se folosește W<sub>a</sub>.',
+ H:'Înălțimea totală a utilajului de la fața superioară a fundației. Din ea se calculează centrul de greutate.',
+ h0:'La utilaje pe picioare: lungimea picioarelor (fundație – fundul rezervorului). La utilaje rezemate pe suprafață: 0.',
+ eta:'Poziția CG în corpul utilajului. 0,5 = mijlocul (masă uniformă). h<sub>g</sub> = h<sub>0</sub> + η·(H − h<sub>0</sub>).',
+ hg:'Dacă furnizorul dă înălțimea CG, introdu-o aici – înlocuiește estimarea.',
+ mode:'<b>EC 4.3.5 (4.25) · P100 10.3.1.2 (K<sub>z</sub>).</b> Pe teren, pe fundație separată: z = 0, fără amplificare. Pe planșeu / platformă: clădirea amplifică mișcarea, sunt necesare z, H și (EC) T<sub>1</sub>.',
+ z:'Cota punctului de prindere față de bază. EC (4.25): z/H · P100: K<sub>z</sub> = 1 + 2z/H.',
+ Hb:'Înălțimea clădirii de la fundație (EC) / înălțimea medie a acoperișului (P100).',
+ T1:'<b>EC (4.25).</b> Perioada fundamentală a clădirii pe direcția analizată. Fără T<sub>a</sub> se presupune rezonanță (acoperitor).',
+ Ta:'<b>EC (4.25), 3.2.2.2.</b> Perioada proprie a utilajului (date furnizor). Gol: utilaj rigid. Pentru utilaje pe teren se verifică și spectrul elastic (extensie inginerească).',
+ gA:'<b>MSZ EN 1998-1 4.3.5.3.</b> γ<sub>a</sub> ≥ 1,5 pentru rezervoare cu substanțe toxice sau explozive periculoase și ancorajele echipamentelor vitale; altfel 1,0.',
+ qa:'<b>MSZ EN 1998-1 Tabelul 4.4.</b> 1,0: rezervor pe picioare în consolă, necontravântuit pe mai mult de jumătate din înălțime. 2,0: contravântuit. În caz de dubiu 1,0.',
+ gC:'<b>P100-1/2013 10.3.1.3.1.</b> γ<sub>CNS</sub> = 1,5 printre altele pentru recipienți și rezervoare cu substanțe toxice sau explozive. În celelalte cazuri γ<sub>CNS</sub> = γ<sub>I,e</sub>.',
+ roCat:'<b>P100-1/2013 Tabelul 10.2 (B, C) și 10.1 (A).</b> β<sub>CNS</sub> – amplificarea dinamică, q<sub>CNS</sub> – factorul de comportare. Utilaj rigid neizolat: 1,0 / 2,5.',
+ sup:'Cum transmite utilajul încărcarea la fundație: pe suprafață – încărcări pe suprafață; pe picioare – pe fiecare placă de bază; șei – două plăci.',
+ bx:'Dimensiunile suprafeței de rezemare pe X și Y. Doar dacă tot utilajul reazemă pe o suprafață – la picioare placa de bază are câmp separat.',
+ Ds:'Diametrul fundului rezervorului.',
+ n:'Număr de picioare sau ancore. La rezemare pe suprafață este opțional – dacă îl dai, se verifică și întinderea în ancore.',
+ Dc:'La dispunere circulară: DIAMETRUL cercului pe care sunt picioarele / ancorele (nu circumferința).',
+ ax:'La dispunere dreptunghiulară: distanța interax între cele două șiruri de picioare pe X și Y.',
+ a2:'Distanța interax între cele două șei, pe direcția axei rezervorului.',
+ fa:'Dimensiunea plăcii de bază a piciorului / șeii. Pe această suprafață se dau încărcările pentru AxisVM.',
+ pshape:'Fundația proprie din beton armat. Dacă este comună cu alt utilaj, alege „Fără / comună” și verific-o separat.',
+ pt:'Grosimea fundației – pentru greutatea proprie, forța de inerție și momentul la talpă.',
+ r_ec:'<b>MSZ EN 1998-1 4.3.5.2, (4.24)–(4.25).</b> F<sub>a</sub> = S<sub>a</sub>·W<sub>a</sub>·γ<sub>a</sub>/q<sub>a</sub>, în CG, pe direcția cea mai defavorabilă. S<sub>a</sub> nu poate fi mai mic decât α·S.',
+ r_ro:'<b>P100-1/2013 10.3.1.2, (10.1)–(10.2).</b> F<sub>CNS</sub> = γ<sub>CNS</sub>·a<sub>g</sub>·β<sub>CNS</sub>·K<sub>z</sub>·m<sub>CNS</sub>/q<sub>CNS</sub>, limitată între 0,75…4·γ<sub>CNS</sub>·a<sub>g</sub>·m<sub>CNS</sub>. La utilaje: forță concentrată în CG (10.3.1.2 (6)).',
+ axisvm:'Încărcări pentru ipotezele EX și EY. Combinații: EC – MSZ EN 1990 6.4.3.4 (6.12b), direcții MSZ EN 1998-1 4.3.3.5.1; P100 – CR 0-2012 și P100-1 4.5.3.6 (regula 30%).',
+ plate:'<b>MSZ EN 1997-1 6.5.4.</b> Măsuri speciale dacă e > B/3 (dreptunghi) sau e > 0,6R (cerc). Lunecare: 6.5.3. Fundația se mișcă odată cu terenul: α·S (EC) sau γ<sub>I,e</sub>·a<sub>g</sub> (P100). Pentru amplasament în România, fundația se verifică și după NP 112-2014.'
+},
+en:{
+ drive:'<b>Which code gives the load?</b> Eurocode: MSZ EN 1998-1 4.3.5 (site in Hungary, Hungarian NA). P100: P100-1/2013 chapter 10 (site in Romania – mandatory there). “Both”: continues with the larger force.',
+ agR:'<b>MSZ EN 1998-1 3.2.1 and Annex NB.</b> Reference peak ground acceleration on type A ground, 475-year return period. Annex NB lists it by town in g; ×9.81 for m/s².',
+ gI:'<b>MSZ EN 1998-1 4.2.5, Table 4.3.</b> Importance class of the building. a<sub>g</sub> = γ<sub>I</sub>·a<sub>gR</sub>. Ordinary industrial building: class II (1.0).',
+ soil:'<b>MSZ EN 1998-1 3.1.2, Table 3.1.</b> Based on the top 30 m (v<sub>s,30</sub>, N<sub>SPT</sub> or c<sub>u</sub>). Usually given in the geotechnical report. If unsure, D is conservative.',
+ soilinfo:'<b>MSZ EN 1998-1 Table 3.2, NA3.6.</b> The Hungarian NA requires the Type 1 spectrum. S is the soil factor; T<sub>B</sub>, T<sub>C</sub>, T<sub>D</sub> are the corner periods.',
+ ag:'<b>P100-1/2013 3.1, Figure 3.1.</b> Design ground acceleration in g, 225-year return period, from the map (0.10–0.40 g). Site effects are in the T<sub>C</sub> zone, no separate S.',
+ gIe:'<b>P100-1/2013 4.4.5, Table 4.2.</b> I: 1.4 (e.g. buildings with toxic gases, explosives) · II: 1.2 · III: 1.0 (ordinary) · IV: 0.8.',
+ delta:'<b>MSZ EN 1997-1 6.5.3 (10).</b> For cast-in-place foundations the base–soil friction angle δ = φ<sub>cv</sub> (critical-state friction angle).',
+ gc:'Reinforced concrete unit weight, EN 1991-1-1 Annex A: 25 kN/m³.',
+ Wa:'<b>EC: MSZ EN 1998-1 4.3.5.2 · P100: 10.3.1.2 (m<sub>CNS</sub>).</b> Operating weight: self-weight + contents. In the seismic case ψ<sub>2</sub> = 1.0 for contents (the tank is always full). The operating value from the manufacturer’s load data.',
+ Wh:'For a flat-bottom tank the liquid bears on the bottom plate, so only the empty weight holds the anchors down. Enter the empty weight; if blank, W<sub>a</sub> is used.',
+ H:'Total machine height above the slab top. Used to estimate the centre of gravity.',
+ h0:'For machines on legs: leg length (slab to tank bottom). For machines bearing on a surface: 0.',
+ eta:'Position of the CG within the machine body. 0.5 = mid-height (uniform mass). h<sub>g</sub> = h<sub>0</sub> + η·(H − h<sub>0</sub>).',
+ hg:'If the manufacturer gives the CG height, enter it here – it overrides the estimate.',
+ mode:'<b>EC 4.3.5 (4.25) · P100 10.3.1.2 (K<sub>z</sub>).</b> On the ground on its own separated slab: z = 0, no amplification. On a floor / platform: the building amplifies the motion, so z, H and (EC) T<sub>1</sub> are needed.',
+ z:'Height of the attachment point above the base. EC (4.25): z/H · P100: K<sub>z</sub> = 1 + 2z/H.',
+ Hb:'Building height from the foundation (EC) / mean roof height (P100).',
+ T1:'<b>EC (4.25).</b> Fundamental period of the building in the direction considered. Without T<sub>a</sub>, resonance is assumed (conservative).',
+ Ta:'<b>EC (4.25), 3.2.2.2.</b> Natural period of the machine (manufacturer data). Blank: rigid machine. For machines on the ground the elastic spectrum is also checked (engineering extension).',
+ gA:'<b>MSZ EN 1998-1 4.3.5.3.</b> γ<sub>a</sub> ≥ 1.5 for tanks containing toxic or explosive substances hazardous to public safety and for anchorages of life-safety equipment; otherwise 1.0.',
+ qa:'<b>MSZ EN 1998-1 Table 4.4.</b> 1.0: tank on cantilever legs, unbraced over more than half its height. 2.0: unbraced over less than half, or braced. If in doubt, 1.0.',
+ gC:'<b>P100-1/2013 10.3.1.3.1.</b> γ<sub>CNS</sub> = 1.5 among others for vessels and tanks containing toxic or explosive substances. Otherwise γ<sub>CNS</sub> = γ<sub>I,e</sub>.',
+ roCat:'<b>P100-1/2013 Table 10.2 (B, C) and 10.1 (A).</b> β<sub>CNS</sub> is the dynamic amplification, q<sub>CNS</sub> the behaviour factor. Rigid non-isolated equipment: 1.0 / 2.5.',
+ sup:'How the machine passes its load to the slab: surface loads for a machine bearing on a surface, per-base-plate loads for legs, two base plates for saddles.',
+ bx:'Size of the bearing surface in X and Y. Only when the whole machine bears on one surface – for legs the base plate has its own field.',
+ Ds:'Diameter of the tank bottom.',
+ n:'Number of legs or anchors. Optional for machines bearing on a surface – if given, anchor tension is also checked.',
+ Dc:'For a circular layout: the DIAMETER of the circle through the legs / anchors (not the circumference).',
+ ax:'For a rectangular layout: centre-to-centre spacing of the two leg rows in X and Y.',
+ a2:'Centre-to-centre spacing of the two saddles along the tank axis.',
+ fa:'Size of the leg / saddle base plate. AxisVM surface loads are given over this area.',
+ pshape:'The machine’s own reinforced concrete slab. If shared with another machine, choose “None / shared” and check the slab separately.',
+ pt:'Slab thickness – for its self-weight, inertia force and the moment at the base.',
+ r_ec:'<b>MSZ EN 1998-1 4.3.5.2, (4.24)–(4.25).</b> F<sub>a</sub> = S<sub>a</sub>·W<sub>a</sub>·γ<sub>a</sub>/q<sub>a</sub>, at the CG, in the most unfavourable direction. S<sub>a</sub> may not be taken less than α·S.',
+ r_ro:'<b>P100-1/2013 10.3.1.2, (10.1)–(10.2).</b> F<sub>CNS</sub> = γ<sub>CNS</sub>·a<sub>g</sub>·β<sub>CNS</sub>·K<sub>z</sub>·m<sub>CNS</sub>/q<sub>CNS</sub>, limited to 0.75…4·γ<sub>CNS</sub>·a<sub>g</sub>·m<sub>CNS</sub>. For equipment: a point force at the CG (10.3.1.2 (6)).',
+ axisvm:'Loads for the EX and EY load cases. Combinations: EC – MSZ EN 1990 6.4.3.4 (6.12b), directions MSZ EN 1998-1 4.3.3.5.1; P100 – CR 0-2012 and P100-1 4.5.3.6 (30% rule).',
+ plate:'<b>MSZ EN 1997-1 6.5.4.</b> Special measures if e > B/3 (rectangle) or e > 0.6R (circle). Sliding: 6.5.3. The slab moves with the ground: α·S (EC) or γ<sub>I,e</sub>·a<sub>g</sub> (P100). For a site in Romania, also check the foundation to NP 112-2014.'
+}};
+
+const RO_CATS=[
+ {l:{hu:'Rezgésszigetelés nélküli berendezés (B.3)',ro:'Echipament neizolat (B.3)',en:'Non-isolated equipment (B.3)'},b:1,q:2.5},
+ {l:{hu:'Nyomástartó edény, szabadon álló (B.4)',ro:'Vas sub presiune / așezat liber (B.4)',en:'Pressure vessel / freestanding (B.4)'},b:1,q:2.5},
+ {l:{hu:'Rugós rezgésszigetelés (B.3)',ro:'Izolat cu arcuri (B.3)',en:'Spring-isolated (B.3)'},b:2.5,q:2},
+ {l:{hu:'Neoprén rezgésszigetelés (B.3)',ro:'Izolat cu neopren (B.3)',en:'Neoprene-isolated (B.3)'},b:2.5,q:2.5},
+ {l:{hu:'Konzolos, súlypont alatt rögzítve (A.1 analógia)',ro:'Consolă / ancorat sub CG (analog A.1)',en:'Cantilever, anchored below CG (cf. A.1)'},b:2.5,q:1.5},
+ {l:{hu:'Kültéri berendezés (B.3)',ro:'Montat în exterior (B.3)',en:'Outdoor equipment (B.3)'},b:2.5,q:6}
+];
+const SOIL={A:[1,0.15,0.4,2],B:[1.2,0.15,0.5,2],C:[1.15,0.2,0.6,2],D:[1.35,0.2,0.8,2],E:[1.4,0.15,0.5,2]};
+const G0={agR:1.47,gI:'1',soil:'D',ag:0.15,gIe:'1',drive:'max',delta:32,gc:25};
+const base={mode:'ground',h0:0,eta:0.5,gA:'1',qa:'1',gC:'auto',roCat:0,pshape:'rect',pt:0.6,axis:'Y'};
+const EXN={
+ ex1:{hu:'Példa – skid / doboz felületen',ro:'Exemplu – skid / container pe suprafață',en:'Example – skid / box on a surface'},
+ ex2:{hu:'Példa – fenéklemezes tartály horgonyszékekkel',ro:'Exemplu – rezervor cu fund plat și scaune de ancorare',en:'Example – flat-bottom tank with anchor chairs'},
+ ex3:{hu:'Példa – álló tartály 4 lábon (kör kiosztás)',ro:'Exemplu – rezervor vertical pe 4 picioare (cerc)',en:'Example – vertical tank on 4 legs (circle)'},
+ ex4:{hu:'Példa – oszlop 4 lábon (téglalap kiosztás)',ro:'Exemplu – coloană pe 4 picioare (dreptunghi)',en:'Example – column on 4 legs (rectangle)'},
+ ex5:{hu:'Példa – fekvő tartály két nyergen',ro:'Exemplu – rezervor orizontal pe două șei',en:'Example – horizontal tank on two saddles'},
+ ex6:{hu:'Példa – gép födémen / platformon',ro:'Exemplu – utilaj pe planșeu / platformă',en:'Example – machine on a floor / platform'}};
+const M0=[
+ {id:'E1',nk:'ex1',Wa:60,H:2.5,sup:'surf-rect',bx:3.0,by:1.9,pB:3.4,pL:2.3},
+ {id:'E2',nk:'ex2',Wa:100,Wh:16,H:2.6,sup:'surf-circ',Ds:2.2,n:4,Dc:2.3,pshape:'circ',pD:2.6},
+ {id:'E3',nk:'ex3',Wa:16,H:2.4,h0:0.5,sup:'legs-circ',n:4,Dc:1.0,fa:0.3,pB:2.2,pL:2.2},
+ {id:'E4',nk:'ex4',Wa:400,H:3.2,h0:0.6,sup:'legs-rect',n:4,ax:1.4,fa:0.3,pB:2.6,pL:2.6},
+ {id:'E5',nk:'ex5',Wa:70,H:1.6,sup:'two',axis:'Y',a2:2.9,fa:0.25,fb:1.0,pB:1.6,pL:3.8},
+ {id:'E6',nk:'ex6',Wa:50,H:1.8,mode:'platform',z:6,Hb:9,T1:0.5,sup:'surf-rect',bx:1.5,by:1.5,pshape:'none'}
+].map(m=>Object.assign({},base,m));
+const KEY='gepalap-foldrenges-v2', LKEY='gepalap-foldrenges-lang';
+let S, LANG='hu';
+try{const l=localStorage.getItem(LKEY);if(l&&L[l])LANG=l;}catch(e){}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.G&&s.M&&s.M.length)return s;}catch(e){}return {G:Object.assign({},G0),M:JSON.parse(JSON.stringify(M0)),sel:0};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+S=load();
+const T=(k,v)=>{let s=L[LANG][k]??L.hu[k]??k; if(v&&typeof s==='string') s=s.replace(/\{(\w+)\}/g,(_,x)=>v[x]??''); return s;};
+const $=id=>document.getElementById(id);
+const num=v=>{if(v===undefined||v===null||v==='')return null;const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:null;};
+const DS=()=>LANG==='en'?'.':',';
+const f=(x,d=2)=>x===null||x===undefined||!isFinite(x)?'–':x.toFixed(d).replace('.',DS()).replace('-','−');
+const fs=(x,d=2)=>x===null||!isFinite(x)?'–':(x>0?'+':'')+f(x,d);
+
+function calc(m,G){
+  const r={};
+  const Wa=num(m.Wa), H=num(m.H), h0=num(m.h0)||0, eta=num(m.eta)??0.5, hgU=num(m.hg);
+  const Wh=num(m.Wh)??Wa;
+  const [Ss,TB,TC,TD]=SOIL[G.soil];
+  const gI=num(G.gI), agR=num(G.agR), ag=num(G.ag), gIe=num(G.gIe);
+  const plat=m.mode==='platform';
+  const z=plat?num(m.z):0, Hb=plat?num(m.Hb):null, T1=plat?num(m.T1):null, Ta=num(m.Ta);
+  r.hg = hgU!==null?hgU:(H!==null?h0+eta*(H-h0):null);
+  const alpha=gI*agR/9.81, aS=alpha*Ss; r.alpha=alpha; r.S=Ss; r.aS=aS;
+  let Sa=aS, saNote=T('sa_g');
+  if(!plat){
+    if(Ta!==null&&Ta>0){const se=aS*(Ta<TB?1+Ta/TB*1.5:Ta<=TC?2.5:Ta<=TD?2.5*TC/Ta:2.5*TC*TD/Ta/Ta); if(se>Sa){Sa=se;saNote=T('sa_se');}}
+  } else {
+    if(z===null||!Hb){Sa=null;saNote=T('sa_need');}
+    else{const zr=Math.min(z/Hb,1); let v;
+      if(Ta!==null&&T1){v=aS*(3*(1+zr)/(1+Math.pow(1-Ta/T1,2))-0.5);saNote=T('sa_425');}
+      else{v=aS*(3*(1+zr)-0.5);saNote=T('sa_res');}
+      Sa=Math.max(v,aS);}
+  }
+  r.Sa=Sa; r.saNote=saNote;
+  const gA=num(m.gA), qa=num(m.qa);
+  r.Fec=(Sa!==null&&Wa!==null)?Sa*Wa*gA/qa:null; r.gA=gA; r.qa=qa;
+  const cat=RO_CATS[m.roCat||0]; const gC=m.gC==='auto'?gIe:num(m.gC);
+  const Kz=plat?((z!==null&&Hb)?1+2*Math.min(z/Hb,1):null):1;
+  r.gC=gC; r.beta=cat.b; r.qC=cat.q; r.Kz=Kz; r.ag=ag;
+  if(Wa!==null&&Kz!==null){
+    const raw=gC*ag*cat.b*Kz*Wa/cat.q, lo=0.75*gC*ag*Wa, hi=4*gC*ag*Wa;
+    r.Fro_raw=raw; r.Fro_lo=lo; r.Fro_hi=hi; r.Fro=Math.min(Math.max(raw,lo),hi);
+    r.roBound=raw<lo?T('bLo'):raw>hi?T('bHi'):T('bF');
+  } else r.Fro=null;
+  const dr=G.drive;
+  if(dr==='ec'){r.F=r.Fec;r.Fsrc='ec';}
+  else if(dr==='ro'){r.F=r.Fro;r.Fsrc='ro';}
+  else{ if(r.Fec===null&&r.Fro===null){r.F=null;} else if((r.Fec??-1)>=(r.Fro??-1)){r.F=r.Fec;r.Fsrc='ec';} else {r.F=r.Fro;r.Fsrc='ro';} }
+  r.aPlate=r.Fsrc==='ro'?gIe*ag:aS;
+  r.M=(r.F!==null&&r.hg!==null)?r.F*r.hg:null;
+  const F=r.F, M=r.M; r.rows=[]; r.checks=[];
+  const add=(c,w,t,v,u)=>r.rows.push([c,w,t,v,u]);
+  const sup=m.sup;
+  if(F!==null&&M!==null){
+    if(sup==='surf-rect'||sup==='surf-circ'){
+      let A,pzX,pzY,qX,qY,lbl;
+      if(sup==='surf-rect'){const bx=num(m.bx),by=num(m.by);
+        if(bx&&by){A=bx*by;pzX=6*M/(bx*bx*by);pzY=6*M/(by*by*bx);qX=4*M/(bx*bx*by);qY=4*M/(by*by*bx);lbl=`${f(bx)} × ${f(by)} m`;}}
+      else{const D=num(m.Ds); if(D){const R=D/2;A=Math.PI*R*R;pzX=pzY=4*M/(Math.PI*R**3);qX=qY=3*M/(4*R**3);lbl=`Ø ${f(D)} m`;}}
+      if(A){
+        const ph=F/A, grav=Wa/A;
+        ['X','Y'].forEach(d=>{const pz=d==='X'?pzX:pzY,q=d==='X'?qX:qY;
+          add('E'+d,`${T('surfAll')} (${lbl})`,`p<sub>${d.toLowerCase()}</sub> ${T('horiz',{d})}`,ph,'kN/m²');
+          add('E'+d,T('sideHalf',{s:'+',d}),T('pzHalf'),-q,'kN/m²');
+          add('E'+d,T('sideHalf',{s:'−',d}),T('pzHalf'),q,'kN/m²');
+          add('E'+d,T('linEdge',{d}),T('pzLin'),pz,'± kN/m²');
+        });
+        const up=grav-Math.max(pzX,pzY);
+        r.checks.push({s:up>=0?'ok':'warn',t:T('c_upl'),d:`W/A − p<sub>z,max</sub> = ${f(grav)} − ${f(Math.max(pzX,pzY))} = ${fs(up)} kN/m²`,p:up>=0?T('p_comp'):T('p_upl')});
+      } else r.checks.push({s:'na',t:T('c_nosurf'),d:'b<sub>x</sub>, b<sub>y</sub> / D<sub>f</sub>',p:T('p_need')});
+    }
+    const n=num(m.n);
+    let legsOK=false,dNX=null,dNY=null;
+    if(sup==='legs-circ'||(sup==='surf-circ'&&n)){const Dc=num(m.Dc); if(n&&Dc){dNX=dNY=4*M/(n*Dc);legsOK=true;}}
+    if(sup==='legs-rect'||(sup==='surf-rect'&&n)){const ax=num(m.ax),ay=num(m.ay)??ax; if(n&&ax){dNX=2*M/(n*ax);dNY=2*M/(n*ay);legsOK=true;}}
+    const isLeg=sup==='legs-circ'||sup==='legs-rect';
+    if(legsOK){
+      const g1=Wh/n, V=F/n, dN=Math.max(dNX,dNY), Nmin=g1-dN;
+      const lbl=isLeg?T('leg'):T('anchor');
+      r.checks.push({s:Nmin>=0?'ok':'crit',t:isLeg?T('c_legs'):T('c_anch'),d:`W/n − ΔN = ${f(g1)} − ${f(dN)} = ${fs(Nmin)} kN / ${lbl}`,p:Nmin>=0?T('p_comp'):T('p_tens',{v:f(-Nmin,1)})});
+      r.checks.push({s:'ok',t:T('c_shear',{l:lbl}),d:`V = F/n = ${f(V)} kN`,p:`${f(V,1)} kN`});
+      if(isLeg){
+        const fa=num(m.fa), fb=num(m.fb)??fa;
+        if(fa){const At=fa*fb;
+          ['X','Y'].forEach(d=>{const dn=d==='X'?dNX:dNY;
+            add('E'+d,`${T('allFeet')} (${f(fa)} × ${f(fb)} m)`,`v ${T('horiz',{d})}`,V/At,'kN/m²');
+            add('E'+d,T('sideLegs',{s:'+',d}),T('pzOver'),-dn/At,'kN/m²');
+            add('E'+d,T('sideLegs',{s:'−',d}),T('pzOver'),dn/At,'kN/m²');});
+          r.footInfo=T('footGrav',{a:f(Wa/n/At,1),b:f(g1/At,1)})+(sup==='legs-circ'?T('foot45'):'');
+        } else {
+          ['X','Y'].forEach(d=>{const dn=d==='X'?dNX:dNY;
+            add('E'+d,T('allLegs'),`F<sub>${d.toLowerCase()}</sub> ${T('horiz',{d})}`,V,'kN');
+            add('E'+d,T('sideLegs',{s:'+',d}),'F<sub>z</sub>',-dn,'kN');
+            add('E'+d,T('sideLegs',{s:'−',d}),'F<sub>z</sub>',dn,'kN');});
+        }
+      } else ['X','Y'].forEach(d=>add('E'+d,T('anchInfo'),T('dNper',{d}),d==='X'?dNX:dNY,'± kN'));
+    } else if(isLeg){
+      r.checks.push({s:'na',t:T('c_nolegs'),d:sup==='legs-circ'?'n, D<sub>c</sub>':'n, a<sub>x</sub>',p:T('p_need')});
+    } else if(sup==='surf-circ'&&num(m.Wh)!==null){
+      r.checks.push({s:'na',t:T('c_noanch'),d:T('d_noanch'),p:T('p_need')});
+    }
+    if(sup==='two'){
+      const a=num(m.a2), fa=num(m.fa), fb=num(m.fb)??fa, ax=m.axis||'Y', tr=ax==='Y'?'X':'Y';
+      if(a&&fa){
+        const At=fa*fb, dN=M/a, g1=Wh/2, pzT=6*(M/2)/(fb*fb*fa), qT=4*(M/2)/(fb*fb*fa);
+        add('E'+ax,`${T('bothSad')} (${f(fa)} × ${f(fb)} m)`,`p ${T('horiz',{d:ax})}`,F/2/At,'kN/m²');
+        add('E'+ax,T('sideSad',{s:'+',d:ax}),T('pzOver'),-dN/At,'kN/m²');
+        add('E'+ax,T('sideSad',{s:'−',d:ax}),T('pzOver'),dN/At,'kN/m²');
+        add('E'+tr,T('bothSad'),`p ${T('horiz',{d:tr})}`,F/2/At,'kN/m²');
+        add('E'+tr,T('bothSadHalf',{s:'+',d:tr}),T('pzHalf'),-qT,'kN/m²');
+        add('E'+tr,T('bothSadHalf',{s:'−',d:tr}),T('pzHalf'),qT,'kN/m²');
+        add('E'+tr,T('sadLin'),T('pzLin'),pzT,'± kN/m²');
+        const gp=g1/At, up=Math.min(gp-dN/At,gp-pzT);
+        r.checks.push({s:up>=0?'ok':'crit',t:T('c_sad'),d:`${f(gp,1)} kN/m² ${T('gravL')} − max(${f(dN/At,1)}; ${f(pzT,1)}) = ${fs(up,1)} kN/m²`,p:up>=0?T('p_comp'):T('p_tensA')});
+        r.checks.push({s:'warn',t:T('c_slideSad'),d:T('d_slideSad',{d:ax,v:f(F/At,1)}),p:T('p_ask')});
+      } else r.checks.push({s:'na',t:T('c_nosad'),d:T('d_nosad'),p:T('p_need')});
+    }
+  }
+  const ps=m.pshape, t=num(m.pt);
+  if(F!==null&&M!==null&&ps!=='none'&&t){
+    let A=null,dims=null;
+    if(ps==='rect'){const B=num(m.pB),Ll=num(m.pL); if(B&&Ll){A=B*Ll;dims={X:B,Y:Ll,circ:false};}}
+    else{const D=num(m.pD); if(D){A=Math.PI*D*D/4;dims={X:D,Y:D,circ:true,D};}}
+    if(A){
+      const Wp=A*t*num(G.gc), Fp=r.aPlate*Wp, N=Wa+Wp, Mt=F*(t+r.hg)+Fp*t/2, e=Mt/N;
+      const tan=Math.tan(num(G.delta)*Math.PI/180), slide=(F+Fp)/(N*tan);
+      const P={Wp,Fp,N,Mt,e,slide,dirs:{}};
+      ['X','Y'].forEach(d=>{const b=dims[d], l=dims.circ?null:dims[d==='X'?'Y':'X'];
+        let cls,smax,smin,s;
+        if(dims.circ){const D=dims.D;
+          if(e<=D/8){cls=T('full');s='ok';smax=N/A+Mt/(Math.PI*D**3/32);smin=N/A-Mt/(Math.PI*D**3/32);}
+          else if(e<=0.3*D){cls=T('part');s='warn';smax=null;smin=0;}
+          else{cls=T('spec_c');s='crit';smax=null;smin=0;}
+        } else {
+          if(e<=b/6){cls=T('full');s='ok';smax=N/A*(1+6*e/b);smin=N/A*(1-6*e/b);}
+          else if(e<=b/3){cls=T('part');s='warn';smax=2*N/(3*l*(b/2-e));smin=0;}
+          else{cls=T('spec_r');s='crit';smax=e<b/2?2*N/(3*l*(b/2-e)):null;smin=0;}
+        }
+        P.dirs[d]={b,cls,s,smax,smin,lim1:dims.circ?dims.D/8:b/6,lim2:dims.circ?0.3*dims.D:b/3};});
+      r.plate=P;
+      const rk={ok:0,warn:1,crit:2};
+      const worst=['X','Y'].map(d=>P.dirs[d]).sort((a,b)=>rk[b.s]-rk[a.s])[0];
+      r.checks.push({s:worst.s,t:T('c_ecc'),d:`e = ${f(e,3)} m · ${T('limit')} ${f(worst.lim1,3)} / ${f(worst.lim2,3)} m`,p:worst.cls});
+      r.checks.push({s:slide<=1?'ok':'crit',t:T('c_slide'),d:`(F + F<sub>alap</sub>)/(N·tg δ) = ${f(F+Fp)}/${f(N*tan)} = ${f(slide,3)}`,p:slide<=1?T('p_ok'):T('p_nok')});
+      add('EX / EY',T('plateAll'),T('plateIn'),Fp/A,'kN/m²');
+    } else r.checks.push({s:'na',t:T('c_noplate'),d:'B, L / D',p:T('p_need')});
+  } else if(ps==='none') r.checks.push({s:'na',t:T('c_plate'),d:T('d_noplate'),p:'–'});
+  if(F===null) r.checks.unshift({s:'na',t:T('c_noF'),d:plat?T('d_noFp'):'W<sub>a</sub>',p:T('p_need')});
+  else if(r.hg===null) r.checks.unshift({s:'na',t:T('c_nohg'),d:T('d_nohg'),p:T('p_need')});
+  const rank={crit:3,warn:2,ok:1,na:0};
+  r.status=r.checks.reduce((a,c)=>rank[c.s]>rank[a]?c.s:a,'ok');
+  if(r.checks.length&&r.checks.every(c=>c.s==='na')) r.status='na';
+  return r;
+}
+
+const MF=['id','name','Wa','Wh','H','h0','eta','hg','mode','z','Hb','T1','Ta','gA','qa','gC','roCat','sup','bx','by','Ds','n','Dc','ax','ay','axis','a2','fa','fb','pshape','pB','pL','pD','pt','note'];
+const GF=['agR','gI','soil','ag','gIe','delta','gc'];
+function cur(){return S.M[S.sel];}
+function nm(m){return (m.name&&m.name.length)?m.name:(m.nk&&EXN[m.nk]?EXN[m.nk][LANG]:'');}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function showVal(v){if(v===null||v===undefined)return '';return typeof v==='number'?String(v).replace('.',DS()):String(v);}
+function fillSel(){$('m_sel').innerHTML=S.M.map((m,i)=>`<option value="${i}">${esc(m.id)} – ${esc(nm(m))}</option>`).join('');$('m_sel').value=S.sel;}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i]').forEach(el=>{const v=T(el.dataset.i); if(el.tagName==='OPTION') el.textContent=v.replace(/<[^>]+>/g,''); else el.innerHTML=v;});
+  document.title=T('title');
+  const cs=num($('m_roCat').value)||0;
+  $('m_roCat').innerHTML=RO_CATS.map((c,i)=>`<option value="${i}">${c.l[LANG]} – ${f(c.b,1)} / ${f(c.q,1)}</option>`).join('');
+  $('m_roCat').value=(cur().roCat||0);
+  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===LANG?'true':'false'));
+  document.querySelectorAll('[data-info]').forEach(el=>{
+    const k=el.dataset.info; let ib=el.querySelector(':scope > .ib');
+    if(!ib){ib=document.createElement('span');ib.className='ib';ib.textContent='i';ib.setAttribute('role','button');ib.tabIndex=0;ib.setAttribute('aria-expanded','false');el.appendChild(ib);
+      if(!el._box){const box=document.createElement('div');box.className='info';box.hidden=true;
+        const host=el.closest('label');
+        if(host) host.appendChild(box); else (el.closest('h2,h3')||el).insertAdjacentElement('afterend',box);
+        el._box=box;}
+      const box=el._box; ib.setAttribute('aria-expanded',String(!box.hidden));
+      const tog=ev=>{ev.preventDefault();ev.stopPropagation();box.hidden=!box.hidden;ib.setAttribute('aria-expanded',String(!box.hidden));};
+      ib.addEventListener('click',tog); ib.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' ')tog(ev);});
+    }
+    ib.setAttribute('aria-label','Info'); el._box.innerHTML=(INFO[LANG]||INFO.hu)[k]||'';
+  });
+  setDrive();
+}
+function setDrive(){
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.drive===S.G.drive?'true':'false'));
+  const d=S.G.drive;
+  $('card_ec').classList.toggle('dim',d==='ro'); $('code_ec').classList.toggle('dim',d==='ro');
+  $('card_ro').classList.toggle('dim',d==='ec'); $('code_ro').classList.toggle('dim',d==='ec');
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{S.G.drive=b.dataset.drive;setDrive();update();}));
+function fillInputs(){
+  GF.forEach(k=>{$('g_'+k).value=showVal(S.G[k]);});
+  const m=cur(); MF.forEach(k=>{$('m_'+k).value=showVal(m[k]);}); $('m_name').placeholder=nm(m);
+  $('m_roCat').value=m.roCat||0; vis();
+}
+function vis(){
+  const m=cur();
+  document.querySelectorAll('[data-show]').forEach(el=>{const ks=el.dataset.show.split(' ');el.hidden=!ks.some(k=>k===m.sup||k===m.mode);});
+  document.querySelectorAll('[data-pshow]').forEach(el=>{el.hidden=!el.dataset.pshow.split(' ').includes(m.pshape);});
+}
+function soilInfo(){const s=SOIL[S.G.soil];$('g_soilinfo').value=`${f(s[0])} · ${f(s[1])} · ${f(s[2],1)} · ${f(s[3],1)} s`;}
+GF.forEach(k=>$('g_'+k).addEventListener('input',e=>{S.G[k]=e.target.value;update();}));
+MF.forEach(k=>$('m_'+k).addEventListener(k==='id'||k==='name'?'change':'input',e=>{
+  const m=cur(); let v=e.target.value; if(k==='roCat') v=parseInt(v,10);
+  m[k]=v; if(['sup','mode','pshape'].includes(k)) vis(); if(k==='id'||k==='name') fillSel(); update();}));
+$('m_sel').addEventListener('change',e=>{S.sel=+e.target.value;fillInputs();update();});
+$('b_add').addEventListener('click',()=>{S.M.push(Object.assign({},base,{id:'P'+(S.M.length+1),name:T('newM'),sup:'surf-rect'}));S.sel=S.M.length-1;fillSel();fillInputs();update();});
+let delArm=false;
+$('b_del').addEventListener('click',()=>{
+  if(S.M.length<=1)return;
+  if(!delArm){delArm=true;$('b_del').textContent=T('delSure');setTimeout(()=>{delArm=false;$('b_del').textContent=T('del');},2500);return;}
+  S.M.splice(S.sel,1);S.sel=Math.max(0,S.sel-1);delArm=false;$('b_del').textContent=T('del');fillSel();fillInputs();update();});
+let resArm=false;
+$('b_reset').addEventListener('click',()=>{
+  if(!resArm){resArm=true;$('b_reset').textContent=T('resetSure');setTimeout(()=>{resArm=false;$('b_reset').textContent=T('reset');},3000);return;}
+  S={G:Object.assign({},G0),M:JSON.parse(JSON.stringify(M0)),sel:0};resArm=false;$('b_reset').textContent=T('reset');fillSel();fillInputs();applyLang();update();});
+document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>{LANG=b.dataset.lang;try{localStorage.setItem(LKEY,LANG);}catch(e){}applyLang();fillSel();fillInputs();update();}));
+
+function render(){
+  const m=cur(), r=calc(m,S.G);
+  $('r_title').innerHTML=T('force_t')+`${esc(m.id)} ${esc(nm(m))}`;
+  const row=(k,v)=>`<div class="r"><span>${k}</span><b>${v}</b></div>`;
+  $('r_ec').innerHTML=[
+    row('α = γ<sub>I</sub>·a<sub>gR</sub>/g',f(r.alpha,4)), row('S ('+esc(S.G.soil)+T('soilL')+')',f(r.S)), row(r.saNote,f(r.Sa,4)),
+    row('γ<sub>a</sub> / q<sub>a</sub>',f(r.gA,1)+' / '+f(r.qa,1)), row('F<sub>a</sub>/W<sub>a</sub>',r.Fec!==null?f(r.Fec/num(m.Wa),4):'–')].join('');
+  $('r_ecF').innerHTML=r.Fec!==null?`${f(r.Fec)} kN<small>F<sub>a</sub></small>`:'–';
+  $('r_ro').innerHTML=[
+    row('γ<sub>CNS</sub> · a<sub>g</sub> [g]',f(r.gC,2)+' · '+f(r.ag,2)), row('β<sub>CNS</sub> / q<sub>CNS</sub>',f(r.beta,1)+' / '+f(r.qC,1)),
+    row('K<sub>z</sub> = 1 + 2z/H',f(r.Kz,2)), row(T('fromFormula'),r.Fro!==null?f(r.Fro_raw)+' kN':'–'),
+    row(T('bounds'),r.Fro!==null?f(r.Fro_lo)+' … '+f(r.Fro_hi)+' kN':'–')].join('');
+  $('r_roF').innerHTML=r.Fro!==null?`${f(r.Fro)} kN<small>${r.roBound}</small>`:'–';
+  const src=r.Fsrc==='ec'?'Eurocode':r.Fsrc==='ro'?'P100':'–';
+  $('r_design').innerHTML=`
+    <div class="kv"><span class="k">${T('k_F')}</span><span class="v">${f(r.F)} kN</span></div>
+    <div class="kv"><span class="k">${T('k_src')}</span><span class="v" style="color:var(--${r.Fsrc||'muted'})">${src}</span></div>
+    <div class="kv"><span class="k">${T('k_hg')}</span><span class="v">${f(r.hg)} m</span></div>
+    <div class="kv"><span class="k">M = F·h<sub>g</sub></span><span class="v">${f(r.M)} kNm</span></div>
+    <span class="pill ${r.status}">${T('st')[r.status]}</span>`;
+  $('r_checks').innerHTML=(r.checks.length?r.checks:[{s:'na',t:T('c_none'),d:'',p:'–'}]).map(c=>`<div class="check ${c.s}"><div><div class="t">${c.t}</div><div class="d">${c.d}</div></div><span class="pill ${c.s}">${c.p}</span></div>`).join('')
+    +(r.footInfo?`<div class="hint">${r.footInfo}</div>`:'')+(m.note?`<div class="hint"><b>${T('noteL')}:</b> ${esc(m.note)}</div>`:'');
+  $('r_axis').innerHTML=r.rows.length?r.rows.map(x=>`<tr><td class="dir">${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td class="n">${fs(x[3],2)}</td><td>${x[4]}</td></tr>`).join(''):`<tr><td colspan="5" style="color:var(--muted)">${T('noDist')}</td></tr>`;
+  if(r.plate){const P=r.plate,X=P.dirs.X,Y=P.dirs.Y;
+    const pr=(k,a,b,n)=>`<tr><td>${k}</td><td class="n">${a}</td><td class="n">${b}</td><td>${n||''}</td></tr>`;
+    $('r_plate').innerHTML=[
+      pr(T('pl_W'),f(P.Wp,1)+' kN','',''),
+      pr(T('pl_F'),f(P.Fp,2)+' kN','',`a = ${f(r.aPlate,4)} g (${r.Fsrc==='ro'?'γ<sub>I,e</sub>·a<sub>g</sub>':'α·S'})`),
+      pr('N = W<sub>a</sub> + W',f(P.N,1)+' kN','',''),
+      pr('M = F·(t + h<sub>g</sub>) + F<sub>alap</sub>·t/2',f(P.Mt,2)+' kNm','',''),
+      pr('e = M/N',f(P.e,3)+' m','',''),
+      pr(T('pl_dim'),f(X.b)+' m',f(Y.b)+' m',''),
+      pr(T('pl_cls'),`<span class="pill ${X.s}">${X.cls}</span>`,`<span class="pill ${Y.s}">${Y.cls}</span>`,'EC7 6.5.4'),
+      pr('σ<sub>max</sub>',X.smax!==null?f(X.smax,1)+' kPa':T('nonlin'),Y.smax!==null?f(Y.smax,1)+' kPa':T('nonlin'),''),
+      pr('σ<sub>min</sub>',f(X.smin,1)+' kPa',f(Y.smin,1)+' kPa',''),
+      pr(T('pl_sl'),f(P.slide,3),'',T('pl_sln'))].join('');
+  } else $('r_plate').innerHTML=`<tr><td colspan="4" style="color:var(--muted)">${T('noPlate')}</td></tr>`;
+  $('r_all').innerHTML=S.M.map((mm,i)=>{const q=calc(mm,S.G);
+    return `<tr data-i="${i}" class="${i===S.sel?'sel':''}"><td><b>${esc(mm.id)}</b></td><td>${esc(nm(mm))}</td><td class="n">${f(num(mm.Wa),1)}</td><td class="n">${f(q.Fec)}</td><td class="n">${f(q.Fro)}</td><td class="n">${f(q.F)}</td><td class="n">${f(q.M)}</td><td><span class="pill ${q.status}">${T('sts')[q.status]}</span></td></tr>`;}).join('');
+  window.__rows=r.rows;
+}
+$('r_all').addEventListener('click',e=>{const tr=e.target.closest('tr');if(!tr)return;S.sel=+tr.dataset.i;fillSel();fillInputs();update();});
+$('b_copy').addEventListener('click',()=>{
+  const strip=s=>String(s).replace(/<[^>]+>/g,'');
+  const m=cur();
+  const txt=[T('copyHead')].concat((window.__rows||[]).map(x=>[m.id,x[0],strip(x[1]),strip(x[2]),fs(x[3],2),strip(x[4])].join('\t'))).join('\n');
+  const done=()=>{$('copymsg').textContent=T('copied');};
+  function fallback(t){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){$('copymsg').textContent=T('copyFail');}ta.remove();}
+  try{navigator.clipboard.writeText(txt).then(done,()=>fallback(txt));}catch(e){fallback(txt);}
+});
+function update(){soilInfo();render();save();}
+fillSel();applyLang();fillInputs();update();
+})();
+</script>
+
+</body></html>

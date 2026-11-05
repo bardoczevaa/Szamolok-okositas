@@ -1,0 +1,362 @@
+<!-- Ékezet-helyreállító — diacritics restoration tool -->
+<style>
+  #diac-tool {
+    --ink: #232019;
+    --paper: #f6f3ec;
+    --paper-raised: #ffffff;
+    --rule: #d8d2c2;
+    --accent: #a6491f;
+    --accent-soft: #e7d9c9;
+    --mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", "Inter", -apple-system, "Segoe UI", sans-serif;
+
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  #diac-tool * { box-sizing: border-box; }
+
+  #diac-tool .dt-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--rule);
+    flex-wrap: wrap;
+  }
+  #diac-tool .dt-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+  #diac-tool .dt-title .dt-index {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 500;
+    margin-right: 8px;
+    font-size: 13px;
+  }
+  #diac-tool .dt-sub {
+    font-size: 12px;
+    color: #6b6353;
+    margin: 2px 0 0;
+  }
+
+  #diac-tool .dt-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  #diac-tool select {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--paper-raised);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  #diac-tool .dt-lang-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #837a64;
+  }
+
+  #diac-tool .dt-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  @media (max-width: 720px) {
+    #diac-tool .dt-body { grid-template-columns: 1fr; }
+    #diac-tool .dt-divider { display: none; }
+  }
+  #diac-tool .dt-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  #diac-tool .dt-pane + .dt-pane {
+    border-left: 1px solid var(--rule);
+  }
+  @media (max-width: 720px) {
+    #diac-tool .dt-pane + .dt-pane { border-left: none; border-top: 1px solid var(--rule); }
+  }
+  #diac-tool .dt-pane-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #837a64;
+    padding: 10px 22px 0;
+  }
+  #diac-tool textarea {
+    width: 100%;
+    min-height: 280px;
+    resize: vertical;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding: 10px 22px 20px;
+  }
+  #diac-tool textarea::placeholder { color: #a49b85; }
+  #diac-tool textarea[readonly] { color: #3a3527; }
+
+  #diac-tool .dt-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 22px 18px;
+    border-top: 1px solid var(--rule);
+    flex-wrap: wrap;
+  }
+  #diac-tool .dt-count {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: #837a64;
+  }
+  #diac-tool .dt-actions { display: flex; gap: 8px; align-items: center; }
+
+  #diac-tool button {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  #diac-tool .dt-primary {
+    background: var(--accent);
+    color: #fdf9f2;
+  }
+  #diac-tool .dt-primary:hover { opacity: 0.88; }
+  #diac-tool .dt-primary:disabled {
+    background: #c9b8a4;
+    cursor: not-allowed;
+  }
+  #diac-tool .dt-ghost {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--rule);
+    font-weight: 500;
+  }
+  #diac-tool .dt-ghost:hover { background: var(--accent-soft); }
+  #diac-tool .dt-ghost:disabled { color: #b4ab98; cursor: not-allowed; }
+
+  #diac-tool .dt-status {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--accent);
+    min-height: 16px;
+    padding: 0 22px;
+  }
+  #diac-tool .dt-status.dt-error { color: #b3261e; }
+
+  #diac-tool .dt-progress-track {
+    height: 2px;
+    background: var(--rule);
+    width: 100%;
+    overflow: hidden;
+  }
+  #diac-tool .dt-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+</style>
+
+<div id="diac-tool">
+  <div class="dt-header">
+    <div>
+      <p class="dt-title"><span class="dt-index">01</span>Ékezet-helyreállító</p>
+      <p class="dt-sub">Illessz be ékezet nélküli szöveget — a jobb oldalon megjelenik a helyreállított változat.</p>
+    </div>
+  </div>
+
+  <div class="dt-controls">
+    <span class="dt-lang-label">Nyelv</span>
+    <select id="dt-lang">
+      <option value="Romanian">Română</option>
+      <option value="Hungarian">Magyar</option>
+    </select>
+  </div>
+
+  <div class="dt-progress-track"><div class="dt-progress-fill" id="dt-progress"></div></div>
+
+  <div class="dt-body">
+    <div class="dt-pane">
+      <span class="dt-pane-label">Bemenet</span>
+      <textarea id="dt-input" placeholder="Masold ide a szoveget ekezet nelkul..."></textarea>
+    </div>
+    <div class="dt-pane">
+      <span class="dt-pane-label">Eredmény</span>
+      <textarea id="dt-output" readonly placeholder="Itt jelenik meg az ékezetekkel ellátott szöveg…"></textarea>
+    </div>
+  </div>
+
+  <div class="dt-status" id="dt-status">&nbsp;</div>
+
+  <div class="dt-footer">
+    <span class="dt-count" id="dt-count">0 karakter</span>
+    <div class="dt-actions">
+      <button class="dt-ghost" id="dt-clear">Törlés</button>
+      <button class="dt-ghost" id="dt-copy" disabled>Másolás</button>
+      <button class="dt-primary" id="dt-run">Ékezetek hozzáadása</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $input = document.getElementById('dt-input');
+  const $output = document.getElementById('dt-output');
+  const $run = document.getElementById('dt-run');
+  const $clear = document.getElementById('dt-clear');
+  const $copy = document.getElementById('dt-copy');
+  const $status = document.getElementById('dt-status');
+  const $count = document.getElementById('dt-count');
+  const $lang = document.getElementById('dt-lang');
+  const $progress = document.getElementById('dt-progress');
+
+  const CHUNK_CHARS = 1800; // keeps each API call comfortably within the output token budget
+
+  function setStatus(text, isError) {
+    $status.textContent = text || '\u00A0';
+    $status.classList.toggle('dt-error', !!isError);
+  }
+
+  function updateCount() {
+    const n = $input.value.length;
+    $count.textContent = n + ' karakter';
+  }
+  $input.addEventListener('input', updateCount);
+  updateCount();
+
+  $clear.addEventListener('click', function () {
+    $input.value = '';
+    $output.value = '';
+    $copy.disabled = true;
+    setStatus('');
+    updateCount();
+    $progress.style.width = '0%';
+  });
+
+  $copy.addEventListener('click', async function () {
+    try {
+      await navigator.clipboard.writeText($output.value);
+      setStatus('Vágólapra másolva.');
+    } catch (e) {
+      setStatus('A másolás nem sikerült — jelöld ki kézzel a szöveget.', true);
+    }
+  });
+
+  // Split on paragraph breaks first, then fall back to sentence-ish breaks,
+  // so chunk boundaries land on natural seams and formatting survives.
+  function splitIntoChunks(text) {
+    if (text.length <= CHUNK_CHARS) return [text];
+    const paragraphs = text.split(/\n/);
+    const chunks = [];
+    let current = '';
+    for (const para of paragraphs) {
+      const candidate = current ? current + '\n' + para : para;
+      if (candidate.length > CHUNK_CHARS && current) {
+        chunks.push(current);
+        current = para;
+      } else {
+        current = candidate;
+      }
+      while (current.length > CHUNK_CHARS) {
+        chunks.push(current.slice(0, CHUNK_CHARS));
+        current = current.slice(CHUNK_CHARS);
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  }
+
+  async function restoreChunk(chunk, languageName) {
+    const system = 'You restore missing diacritical marks in ' + languageName + ' text. ' +
+      'The input text has had its diacritics stripped. Add back the correct diacritics based on grammar, ' +
+      'vocabulary and context. Rules: do not translate; do not add, remove, or reorder words; do not fix ' +
+      'unrelated spelling or grammar issues; preserve line breaks, blank lines, spacing, punctuation, list ' +
+      'markers, and capitalization exactly as given. Output ONLY the corrected text, with no preamble, no ' +
+      'explanation, no markdown formatting, and no surrounding quotes.';
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: system,
+        messages: [{ role: 'user', content: chunk }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('API hiba (' + response.status + ')');
+    }
+    const data = await response.json();
+    const text = (data.content || [])
+      .map(function (block) { return block.type === 'text' ? block.text : ''; })
+      .join('');
+    return text;
+  }
+
+  $run.addEventListener('click', async function () {
+    const raw = $input.value;
+    if (!raw.trim()) {
+      setStatus('Illessz be szöveget először.', true);
+      return;
+    }
+
+    $run.disabled = true;
+    $copy.disabled = true;
+    $output.value = '';
+    $progress.style.width = '0%';
+
+    const languageName = $lang.value;
+    const chunks = splitIntoChunks(raw);
+
+    try {
+      let resultParts = [];
+      for (let i = 0; i < chunks.length; i++) {
+        setStatus(chunks.length > 1
+          ? 'Feldolgozás… (' + (i + 1) + '/' + chunks.length + ' rész)'
+          : 'Feldolgozás…');
+        const restored = await restoreChunk(chunks[i], languageName);
+        resultParts.push(restored);
+        $progress.style.width = Math.round(((i + 1) / chunks.length) * 100) + '%';
+      }
+      $output.value = resultParts.join('\n');
+      $copy.disabled = false;
+      setStatus('Kész.');
+    } catch (err) {
+      setStatus('Hiba történt: ' + err.message, true);
+    } finally {
+      $run.disabled = false;
+      setTimeout(function () { $progress.style.width = '0%'; }, 800);
+    }
+  });
+})();
+</script>
