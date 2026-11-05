@@ -1,1 +1,1 @@
-# Sz-mol-k-okositas
+# Szamolok-okositas
